@@ -44,18 +44,22 @@
 export default {
   name: "Login",
   data: () => ({
-      username: null,
-      password: null,
-      loginInProgress: false,
+    username: 'john@test.com',
+    password: 'changeme',
+    loginInProgress: false,
   }),
   methods: {
-      authenticate() {
-          this.loginInProgress = true;
-          console.log(this.username)
-          console.log(this.password)
-          //setTimeout(() => {this.loginInProgress = false}, 3000)
-          return false;
-      },
+    authenticate() {
+      this.loginInProgress = true
+      let username = this.username
+      let password = this.password
+      this.$store.dispatch('login', { username, password })
+        .then(() => {
+          this.loginInProgress = false;
+          this.$router.push('/review');
+        })
+      //setTimeout(() => {this.loginInProgress = false}, 3000)
+    },
   }
 };
 </script>
