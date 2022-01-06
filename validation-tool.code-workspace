@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "validation-tool-backend"
+		},
+		{
+			"path": "validation-tool-frontend"
+		}
+	],
+	"settings": {}
+}
