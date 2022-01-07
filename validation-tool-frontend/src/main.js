@@ -2,14 +2,12 @@ import Vue from 'vue'
 
 import app from './App.vue'
 import router from './router'
-import store from './store';
+import store from './store'
 import vuetify from './plugins/vuetify'
 
-import Api from './plugins/api';
-import Service from './plugins/service';
+import Api from './plugins/api'
 
-Vue.use(Api);
-Vue.use(Service);
+Vue.use(Api)
 
 Vue.config.productionTip = false
 
