@@ -10,7 +10,7 @@ let currentToken = localStorage.getItem('token') || null
 let currentUser  = currentToken ? jwtDecode(currentToken) : null
 
 // if token is expired
-if (currentUser.exp * 1000 < new Date().getTime()) {
+if (currentUser && currentUser.exp * 1000 < new Date().getTime()) {
   localStorage.removeItem('token')
   currentToken = null
   currentUser = null
@@ -18,7 +18,6 @@ if (currentUser.exp * 1000 < new Date().getTime()) {
 
 export default new Vuex.Store({
   state: {
-    //status: null,
     token: currentToken,
     user: currentUser,
   },
@@ -33,7 +32,7 @@ export default new Vuex.Store({
           console.log(payload)
           const user = { ...payload }
           localStorage.setItem('token', token)
-          commit('auth_success', token, user)
+          commit('auth_success', { token, user })
         })
         .catch(err => {
           localStorage.removeItem('token')
@@ -47,32 +46,31 @@ export default new Vuex.Store({
   },
   mutations: {
     auth_request(state) {
-      //state.status = 'loading'
       state.token = null
       state.user = null
     },
-    auth_success(state, token, user) {
-      //state.status = 'success'
+    auth_success(state, { token, user }) {
       state.token = token
       state.user = user
     },
     auth_error(state) {
-      //state.status = 'error'
       state.token = null
       state.user = null
     },
     logout(state) {
-      //state.status = null
       state.token = null
       state.user = null
     },
   },
   getters: {
     isLoggedIn(state) {
-      return !!state.token && !!state.user
+      return state.token && state.user
     },
     token(state) {
       return state.token
-    }
+    },
+    user(state) {
+      return state.user
+    },
   }
 })

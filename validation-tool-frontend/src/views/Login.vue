@@ -48,6 +48,11 @@ export default {
     password: 'changeme',
     loginInProgress: false,
   }),
+  created() {
+    if (this.$store.getters.isLoggedIn) {
+      this.$router.push('/review')
+    }
+  },
   methods: {
     authenticate() {
       this.loginInProgress = true
@@ -55,10 +60,14 @@ export default {
       let password = this.password
       this.$store.dispatch('login', { username, password })
         .then(() => {
-          this.loginInProgress = false;
-          this.$router.push('/review');
+          this.loginInProgress = false
+          if (this.$store.getters.isLoggedIn) {
+            this.$router.push('/review')
+          } else {
+            // show login error
+            console.log('LOGIN ERROR')
+          }
         })
-      //setTimeout(() => {this.loginInProgress = false}, 3000)
     },
   }
 };
