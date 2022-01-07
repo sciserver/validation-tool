@@ -1,10 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { VarChar } from 'mssql';
+import { DatabaseService } from 'src/database/database.service';
+import { User } from './user.interface';
 
 // This should be a real class/interface representing a user entity
-export type User = any;
 
+/**
+ * Description placeholder
+ * @date 1/6/2022 - 10:20:26 PM
+ *
+ * @export
+ * @class UsersService
+ * @typedef {UsersService}
+ */
 @Injectable()
 export class UsersService {
+  constructor(private databaseService: DatabaseService) {}
+
+  /**
+   * Description placeholder
+   * @date 1/6/2022 - 10:20:26 PM
+   *
+   * @private
+   * @readonly
+   * @type {{}}
+   */
   private readonly users = [
     {
       source_id: 3,
@@ -21,7 +41,41 @@ export class UsersService {
     // },
   ];
 
+  /**
+   * Description placeholder
+   * @date 1/6/2022 - 10:20:26 PM
+   *
+   * @async
+   * @param {string} email
+   * @returns {(Promise<User | undefined>)}
+   */
   async findOne(email: string): Promise<User | undefined> {
     return this.users.find((user) => user.email === email);
+  }
+
+  /**
+   * Description placeholder
+   * @date 1/6/2022 - 10:20:26 PM
+   *
+   * @async
+   * @param {string} email
+   * @returns {*}
+   */
+  async loginUserByEmail(email: string, password: string): Promise<User> {
+    let user: User = null;
+    const pool = await this.databaseService.getConnection();
+    const result = await // .input('ObjectTypeID', BigInt, 1)
+    pool
+      .request()
+      .input('Email', VarChar, email)
+      .input('Password', VarChar, password)
+      .query(`SELECT source_id, source_type, organization_name, first_name, last_name, email
+        FROM richcontext_dev_redesign.dbo.metadata_source WHERE email = @Email
+        AND password = HASHBYTES('SHA2_256', @Password)`);
+    if (result.recordset && result.recordset.length > 0) {
+      user = result.recordset[0] as User;
+    }
+    return user;
+    // pool.close();
   }
 }
