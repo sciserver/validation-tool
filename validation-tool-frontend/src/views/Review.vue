@@ -1,11 +1,20 @@
 <template>
   <v-container fluid>
-    Total to be reviewed: {{ totalPending }}
-    <br> 
-    Total reviewed: {{ totalReviewed }}
-    <br>
-    <br>
-    {{ pendingReviews }}
+    <v-row no-gutters>
+      <v-col cols="12">
+        <v-layout justify-center>You have {{ totalReviewed }} of {{ totalPending }} publication-dataset dyads to review</v-layout>
+      </v-col>
+      <v-col cols="12">
+        <v-progress-linear v-model="reviewRatio" height="20">
+          <strong>{{ reviewRatio }}%</strong>
+        </v-progress-linear>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        {{ pendingReviews }}
+      </v-col>  
+    </v-row>
   </v-container>
 </template>
 
@@ -19,7 +28,7 @@ export default {
     pendingReviews: [],
     reviewed: [],
     totalPending: 0,
-    totalReviewed: 0,
+    totalReviewed: 4,
   }),
   created() {
     // nothing
@@ -27,6 +36,11 @@ export default {
   mounted() {
     this.fetchReviewsCount();
     this.fetchReviews();
+  },
+  computed: {
+    reviewRatio() {
+      return this.totalPending ? Math.ceil(this.totalReviewed / this.totalPending * 100) : 100;
+    }
   },
   methods: {
     fetchReviewsCount() {

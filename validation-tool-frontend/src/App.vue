@@ -4,6 +4,7 @@
       <v-app-bar-title class="logo">Coleridge Initiative Validation Tool</v-app-bar-title>
       <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/">Home</v-btn>
       <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/about" v-show="false">About</v-btn>
+      <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/review" v-if="isLoggedIn">Review</v-btn>
       <v-spacer></v-spacer>
       <v-app-bar-title class="fullname" v-if="isLoggedIn">{{ loggedUserFullName }}</v-app-bar-title>
       <v-btn class="login-btn" color="blue-grey lighten-4" to="/login" v-if="!isLoggedIn && !isLoginPage">Login</v-btn>
@@ -41,13 +42,11 @@ export default {
 }
 </script>
 
-<style>
-#container {
+<style scoped>
+.header {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
 }
 
 .header .logo {
