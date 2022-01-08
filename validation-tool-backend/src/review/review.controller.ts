@@ -1,7 +1,10 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { User } from 'src/users/user.interface';
-import { ValidationDto } from './review.interface';
+import {
+  ValidationGenericMetadataDto,
+  ValidationPublicationDatasetAliasDto,
+} from './review.interface';
 import { ReviewService } from './review.service';
 
 @Controller('review')
@@ -22,19 +25,22 @@ export class ReviewController {
     return { count: count };
   }
 
-  @Post('/dataset_mention_alias')
+  @Post('/generic_metadata')
   @UseGuards(JwtAuthGuard)
-  async reviewDatasetMentionAlias(@Req() req, @Body() body: ValidationDto) {
+  async reviewDatasetMentionAlias(
+    @Req() req,
+    @Body() body: ValidationGenericMetadataDto,
+  ) {
     const user: User = req.user;
     await this.reviewService.reviewDatasetMentionAlias(user.source_id, body);
     return true;
   }
 
-  @Post('/dataset_mention_parent_alias')
+  @Post('/publication_dataset_alias')
   @UseGuards(JwtAuthGuard)
   async reviewDatasetMentionParentAlias(
     @Req() req,
-    @Body() body: ValidationDto,
+    @Body() body: ValidationPublicationDatasetAliasDto,
   ) {
     const user: User = req.user;
     await this.reviewService.reviewDatasetMentionParentAlias(

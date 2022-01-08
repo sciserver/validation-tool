@@ -6,12 +6,26 @@ export interface ReviewItem {
   publication_doi: string;
   publication_title: string;
   dataset_mention_alias: string;
-  dataset_mention_alias_id: number;
+  // dataset_mention_alias_id: number;
   dataset_mention_parent_alias: string;
-  dataset_mention_parent_alias_id: number;
+  // dataset_mention_parent_alias_id: number;
+  publication_dataset_alias_id: number;
 }
 
-export interface ValidationDto {
+export interface ValidationGenericMetadataDto {
   dataset_mention_generic_metadata_id: number;
+  value: number;
+}
+
+export interface ValidationPublicationDatasetAliasDto {
+  value: number;
+  publication_dataset_alias_id: number;
+}
+
+export interface ValidationTableItemDto {
+  validation_id: number;
+  entity_id: number;
+  source_id: number;
+  entity_type: string;
   value: number;
 }
