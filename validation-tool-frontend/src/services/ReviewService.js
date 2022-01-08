@@ -8,7 +8,7 @@ class ReviewService {
 
   getPendingReviews() {
     let config = {
-      params: { 'amount': 10 },
+      params: { 'amount': 50 },
       headers: authHeader(),
     }
     return api
@@ -33,9 +33,28 @@ class ReviewService {
       })
   }
 
-  sendValidation(mentionId, value) {
+  sendDatasetAliasReview(mentionId, value) {
+    let payload = {
+      'dataset_mention_generic_metadata_id': mentionId, 
+      'value': value
+    }
     return api
-      .post(`/review/${mentionId}`, { 'option': value }, { headers: authHeader() })
+      .post('/review/dataset_mention_alias', payload, { headers: authHeader() })
+      .then(response => {
+        return response.data
+      })
+      .catch(err => {
+        throw err.response
+      })
+  }
+
+  sendDatasetParentAliasReview(mentionId, value) {
+    let payload = {
+      'dataset_mention_generic_metadata_id': mentionId, 
+      'value': value
+    }
+    return api
+      .post('/review/dataset_mention_parent_alias', payload, { headers: authHeader() })
       .then(response => {
         return response.data
       })
