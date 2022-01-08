@@ -23,21 +23,11 @@ export class ReviewService {
               then da.alias 
           else NULL
       end as dataset_mention_alias,
-      case
-          when v_alias.value is null
-              then da.alias_id 
-          else NULL
-      end as dataset_mention_alias_id,
-      case
+     case
           when v_parent_alias.value is null
               then da2.alias 
           else NULL
-      end as dataset_mention_parent_alias,
-      case
-          when v_parent_alias.value is null
-              then da2.alias_id 
-          else NULL
-      end as dataset_mention_parent_alias_id
+      end as dataset_mention_parent_alias
   from 
       generic_metadata gm 
   left join 
