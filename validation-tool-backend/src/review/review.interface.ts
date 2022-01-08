@@ -10,3 +10,8 @@ export interface ReviewItem {
   dataset_mention_parent_alias: string;
   dataset_mention_parent_alias_id: number;
 }
+
+export interface ValidationDto {
+  dataset_mention_generic_metadata_id: number;
+  value: number;
+}
