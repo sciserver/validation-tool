@@ -106,7 +106,22 @@ export default {
     fetchReviews() {
       reviewService.getPendingReviews()
         .then((data) => {
-          this.pendingReviews = data.map(r => Review.fromData(r))
+          // this.pendingReviews = data.map(r => Review.fromData(r))
+          const newItens = data.map(r => Review.fromData(r));
+          for(const element of newItens) {
+            // console.log(element)
+            const found = this.pendingReviews.find(
+              i => {
+                return element.id == 
+                  i.id;
+              }
+            );
+            // console.log(`element ${element.id} ${found}`)
+            if (! found) {
+              this.pendingReviews.push(element);
+            }
+          }
+          // console.log(this.pendingReviews)
         })
     },
     validateDatasetAlias(review) {
@@ -119,7 +134,7 @@ export default {
           this.checkPendingAnswer(review)
         })
         .catch((error) => {
-          console.error(error);
+          console.warn(error);
           // Considering it's answered if when there was an error
           review.dataset_alias = null // hide buttons
           this.checkPendingAnswer(review)
@@ -135,7 +150,7 @@ export default {
           this.checkPendingAnswer(review)
         })
         .catch((error) => {
-          console.error(error);
+          console.warn(error);
           // Considering it's answered if when there was an error
           review.dataset_parent_alias = null // hide buttons
           this.checkPendingAnswer(review)
@@ -146,7 +161,14 @@ export default {
         console.log(`Review ${review.id} is completed!`)
         let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
         this.pendingReviews.splice(index, 1) // remove completed review
+        if (this.pendingReviews.length < 5) {
+            setTimeout(() => {
+            this.fetchReviews();
+            // console.log(this.pendingReviews);
+          }, 100);
+        }
         this.totalReviewed++ // increment counter for completed reviews
+        // console.log(this.pendingReviews);
       }
     }
   },
