@@ -8,7 +8,7 @@ class ReviewService {
 
   getPendingReviews() {
     let config = {
-      params: { 'amount': 50 },
+      //params: { 'amount': 50 },
       headers: authHeader(),
     }
     return api
@@ -22,7 +22,6 @@ class ReviewService {
   }
 
   getPendingReviewsCount() {
-    console.log(authHeader())
     return api
       .get('/review/count', { headers: authHeader() })
       .then(response => {

@@ -18,7 +18,7 @@
       <v-col cols="12">
         <transition-group name="list" tag="div">
           <!-- start loop -->
-          <div class="publication" v-for="review in pendingReviews" :key="review.id">
+          <div class="publication" v-for="review in topReviews" :key="review.id">
             <div class="publication-title">{{ review.publication_title }}</div>
             <div class="publication-doi">{{ review.publication_doi }}</div>
             <div class="mentions">
@@ -39,29 +39,59 @@
                 </v-col>
                 <v-col cols="3">
                   <div class="mention-dataset">{{ review.dataset_alias }}</div>
-                  <v-btn-toggle 
-                    class="mention-actions"
-                    dense 
+                  <v-btn-toggle dense
+                    class="mention-actions" 
                     v-model="review.dataset_alias_result"
                     v-show="!!review.dataset_alias"
                     @change="validateDatasetAlias(review)">
-                    <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
-                    <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
-                    <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetAliasButtons()" value="1">Yes</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetAliasButtons()" value="-1">No</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetAliasButtons()" value="0">Unsure</v-btn>
                   </v-btn-toggle>
+                  <v-progress-circular indeterminate
+                    v-show="review.dataset_alias_loading"
+                    color="primary">
+                  </v-progress-circular>
+                  <v-icon large 
+                    v-show="review.dataset_alias_check"
+                    color="green darken-2">
+                    mdi-check-bold
+                  </v-icon>
+                  <v-icon large 
+                    class="empty-dataset"
+                    title="Nothing to review here"
+                    v-show="!review.dataset_alias"
+                    color="grey lighten-1">
+                    mdi-minus-box
+                  </v-icon>
                 </v-col>
                 <v-col cols="3">
                   <div class="mention-dataset">{{ review.dataset_parent_alias }}</div>
-                  <v-btn-toggle 
+                  <v-btn-toggle dense
                     class="mention-actions"
-                    dense
                     v-model="review.dataset_parent_alias_result"
                     v-show="!!review.dataset_parent_alias"
                     @change="validateDatasetParentAlias(review)">
-                    <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
-                    <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
-                    <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetParentAliasButtons()" value="1">Yes</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetParentAliasButtons()" value="-1">No</v-btn>
+                    <v-btn color="blue-grey darken-2" dark v-show="review.datasetParentAliasButtons()" value="0">Unsure</v-btn>
                   </v-btn-toggle>
+                  <v-progress-circular indeterminate
+                    v-show="review.dataset_parent_alias_loading"
+                    color="primary">
+                  </v-progress-circular>
+                  <v-icon large 
+                    v-show="review.dataset_parent_alias_check"
+                    color="green darken-2">
+                    mdi-check-bold
+                  </v-icon>
+                  <v-icon large 
+                    class="empty-dataset"
+                    title="Nothing to review here"
+                    v-show="!review.dataset_parent_alias"
+                    color="grey lighten-1">
+                    mdi-minus-box
+                  </v-icon>
                 </v-col>
               </v-row>
             </div>
@@ -80,10 +110,10 @@ import Review from '@/models/Review'
 export default {
   name: 'Review',
   data: () => ({
-    pendingReviews: [],
-    reviewed: [],
-    totalPending: 0,
-    totalReviewed: 4,
+    pendingReviews: [],  // all reviews still pending
+    totalTopReviews: 3,  // how many reviews are shown to the user
+    totalPending: 0,     // how many reviews are pending
+    totalReviewed: 0,    // how many reviews were completed
   }),
   created() {
     // nothing
@@ -91,12 +121,14 @@ export default {
   mounted() {
     this.fetchReviewsCount()
     this.fetchReviews()
-    //setTimeout(() => { this.pendingReviews[0].dataset_alias = null }, 5000)
   },
   computed: {
     reviewRatio() {
       return this.totalPending ? Math.ceil(this.totalReviewed / this.totalPending * 100) : 100
-    }
+    },
+    topReviews() {
+      return this.pendingReviews.slice(0, this.totalTopReviews)
+    },
   },
   methods: {
     fetchReviewsCount() {
@@ -108,73 +140,66 @@ export default {
     fetchReviews() {
       reviewService.getPendingReviews()
         .then((data) => {
-          // this.pendingReviews = data.map(r => Review.fromData(r))
-          const newItens = data.map(r => Review.fromData(r));
-          for(const element of newItens) {
-            // console.log(element)
-            const found = this.pendingReviews.find(
-              i => {
-                return element.id == 
-                  i.id;
-              }
-            );
-            // console.log(`element ${element.id} ${found}`)
-            if (! found) {
-              this.pendingReviews.push(element);
+          let newItens = data.map(r => Review.fromData(r))
+          for (let element of newItens) {
+            let found = this.pendingReviews.find(i => element.id == i.id)
+            if (!found) {
+              this.pendingReviews.push(element)
             }
           }
-          // console.log(this.pendingReviews)
         })
     },
     validateDatasetAlias(review) {
-      console.log(review)
-      // TODO block buttons before request
+      review.dataset_alias_loading = true
       let result = parseInt(review.dataset_alias_result)
       reviewService.sendDatasetAliasReview(review.id, result)
         .then(() => {
-          review.dataset_alias = null // hide buttons
-          this.checkPendingAnswer(review)
+          review.dataset_alias_loading = false
+          review.dataset_alias_check = true
+          setTimeout(() => { this.checkAnswers(review) }, 2000)
         })
         .catch((error) => {
-          console.warn(error);
-          // Considering it's answered if when there was an error
-          review.dataset_alias = null // hide buttons
-          this.checkPendingAnswer(review)
+          console.warn(error); // an error means it's already answered
+          review.dataset_alias_loading = false
+          review.dataset_alias_check = true
+          setTimeout(() => { this.checkAnswers(review) }, 2000)
         })
-      //let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
-      //let removed = this.pendingReviews.splice(index, 1) // remove completed review
-      //removed[0].id = removed[0].id * -1
-      //this.pendingReviews.splice(this.pendingReviews.length, 0, removed[0])
+      // 
+      // TODO delete code below after tests
+      //
+      //await new Promise(r => setTimeout(r, 2000))
+      //review.dataset_alias_loading = false
+      //review.dataset_alias_check = true
+      //await new Promise(r => setTimeout(r, 2000))
+      //this.checkAnswers(review)
     },
     validateDatasetParentAlias(review) {
-      console.log(review)
-      // TODO block buttons before request
+      review.dataset_parent_alias_loading = true
       let result = parseInt(review.dataset_parent_alias_result)
       reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
         .then(() => {
-          review.dataset_parent_alias = null // hide buttons
-          this.checkPendingAnswer(review)
+          review.dataset_parent_alias_loading = false
+          review.dataset_parent_alias_check = true
+          setTimeout(() => { this.checkAnswers(review) }, 2000)
         })
         .catch((error) => {
-          console.warn(error);
-          // Considering it's answered if when there was an error
-          review.dataset_parent_alias = null // hide buttons
-          this.checkPendingAnswer(review)
+          console.warn(error); // an error means it's already answered
+          review.dataset_parent_alias_loading = false
+          review.dataset_parent_alias_check = true
+          setTimeout(() => { this.checkAnswers(review) }, 2000)
         })
     },
-    checkPendingAnswer(review) {
-      if (!review.hasPendingAnswer()) {
-        console.log(`Review ${review.id} is completed!`)
-        let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
+    checkAnswers(review) {
+      if (review.hasPendingAnswer()) {
+        return
+      }
+      let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
+      if (index >= 0) {
         this.pendingReviews.splice(index, 1) // remove completed review
-        if (this.pendingReviews.length < 5) {
-            setTimeout(() => {
-            this.fetchReviews();
-            // console.log(this.pendingReviews);
-          }, 100);
+        if (this.pendingReviews.length <= 5) {
+            setTimeout(() => { this.fetchReviews() }, 100)
         }
         this.totalReviewed++ // increment counter for completed reviews
-        // console.log(this.pendingReviews);
       }
     }
   },
@@ -214,10 +239,13 @@ export default {
 
 }
 .mention-actions {
-  margin: 5px 0 10px 0;
+  margin: 5px 5px 10px 0;
 }
 .mention-actions button {
   text-transform: none;
+}
+.mention i.empty-dataset {
+  margin: 2px 0 0 -2px;
 }
 
 .list-enter-active, .list-leave-active {
