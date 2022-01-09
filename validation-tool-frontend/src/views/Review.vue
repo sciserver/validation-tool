@@ -151,18 +151,19 @@ export default {
     },
     validateDatasetAlias(review) {
       review.dataset_alias_loading = true
+      this.moveReviewToBottom(review)
       let result = parseInt(review.dataset_alias_result)
       reviewService.sendDatasetAliasReview(review.id, result)
         .then(() => {
           review.dataset_alias_loading = false
           review.dataset_alias_check = true
-          setTimeout(() => { this.checkAnswers(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
           review.dataset_alias_loading = false
           review.dataset_alias_check = true
-          setTimeout(() => { this.checkAnswers(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
         })
       // 
       // TODO delete code below after tests
@@ -171,36 +172,47 @@ export default {
       //review.dataset_alias_loading = false
       //review.dataset_alias_check = true
       //await new Promise(r => setTimeout(r, 2000))
-      //this.checkAnswers(review)
+      //this.moveReviewToBottom(review)
     },
     validateDatasetParentAlias(review) {
       review.dataset_parent_alias_loading = true
+      this.moveReviewToBottom(review)
       let result = parseInt(review.dataset_parent_alias_result)
       reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
         .then(() => {
           review.dataset_parent_alias_loading = false
           review.dataset_parent_alias_check = true
-          setTimeout(() => { this.checkAnswers(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
           review.dataset_parent_alias_loading = false
           review.dataset_parent_alias_check = true
-          setTimeout(() => { this.checkAnswers(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
         })
     },
-    checkAnswers(review) {
+    moveReviewToBottom(review) {
       if (review.hasPendingAnswer()) {
         return
       }
       let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
       if (index >= 0) {
-        this.pendingReviews.splice(index, 1) // remove completed review
-        if (this.pendingReviews.length <= 5) {
-            setTimeout(() => { this.fetchReviews() }, 100)
-        }
-        this.totalReviewed++ // increment counter for completed reviews
+        let removed = this.pendingReviews.splice(index, 1)
+        this.pendingReviews.splice(this.totalTopReviews - 1, 1, removed[0])
       }
+    },
+    removeCompletedReview(review) {
+      if (review.hasPendingAnswer()) {
+        return
+      }
+      let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
+      if (index >= 0) {
+        this.pendingReviews.splice(index, 1) // remove completed review 
+      }
+      if (this.pendingReviews.length <= 5) {
+        setTimeout(() => { this.fetchReviews() }, 100)
+      }
+      this.totalReviewed++ // increment counter for completed reviews
     }
   },
 }
