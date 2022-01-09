@@ -20,6 +20,7 @@ class Review {
     this.dataset_parent_alias_loading = false
     this.dataset_alias_check = false
     this.dataset_parent_alias_check = false
+    this.overlay = false
   }
 
   static fromData(data) {

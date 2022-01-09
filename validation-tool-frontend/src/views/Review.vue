@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row no-gutters>
       <v-col cols="12">
-        <v-layout justify-center>You have {{ totalReviewed }} of {{ totalPending }} publication-dataset dyads to review</v-layout>
+        <v-layout justify-center>You've already reviewed {{ totalReviewed }} of {{ totalPending }} publication-dataset dyads</v-layout>
       </v-col>
       <v-col cols="10" offset="1">
         <v-progress-linear 
@@ -19,6 +19,7 @@
         <transition-group name="list" tag="div">
           <!-- start loop -->
           <div class="publication" v-for="review in topReviews" :key="review.id">
+            <v-overlay absolute :opacity="overlayOpacity" :value="review.overlay"></v-overlay>
             <div class="publication-title">{{ review.publication_title }}</div>
             <div class="publication-doi">{{ review.publication_doi }}</div>
             <div class="mentions">
@@ -114,6 +115,7 @@ export default {
     totalTopReviews: 3,  // how many reviews are shown to the user
     totalPending: 0,     // how many reviews are pending
     totalReviewed: 0,    // how many reviews were completed
+    overlayOpacity: 0.4,
   }),
   created() {
     // nothing
@@ -157,13 +159,17 @@ export default {
         .then(() => {
           review.dataset_alias_loading = false
           review.dataset_alias_check = true
-          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 1000)
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
-          review.dataset_alias_loading = false
-          review.dataset_alias_check = true
-          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
+          if (error.status === 409) {
+            review.dataset_alias_loading = false
+            review.dataset_alias_check = true
+            setTimeout(() => { this.removeCompletedReview(review) }, 1000)
+          } else {
+            throw error
+          }
         })
       // 
       // TODO delete code below after tests
@@ -172,7 +178,7 @@ export default {
       //review.dataset_alias_loading = false
       //review.dataset_alias_check = true
       //await new Promise(r => setTimeout(r, 2000))
-      //this.moveReviewToBottom(review)
+      //this.removeCompletedReview(review)
     },
     validateDatasetParentAlias(review) {
       review.dataset_parent_alias_loading = true
@@ -182,13 +188,17 @@ export default {
         .then(() => {
           review.dataset_parent_alias_loading = false
           review.dataset_parent_alias_check = true
-          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
+          setTimeout(() => { this.removeCompletedReview(review) }, 1000)
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
-          review.dataset_parent_alias_loading = false
-          review.dataset_parent_alias_check = true
-          setTimeout(() => { this.removeCompletedReview(review) }, 2000)
+          if (error.status === 409) {
+            review.dataset_parent_alias_loading = false
+            review.dataset_parent_alias_check = true
+            setTimeout(() => { this.removeCompletedReview(review) }, 1000)
+          } else {
+            throw error
+          } 
         })
     },
     moveReviewToBottom(review) {
@@ -199,6 +209,7 @@ export default {
       if (index >= 0) {
         let removed = this.pendingReviews.splice(index, 1)
         this.pendingReviews.splice(this.totalTopReviews - 1, 1, removed[0])
+        review.overlay = true
       }
     },
     removeCompletedReview(review) {
@@ -224,6 +235,7 @@ export default {
   margin-bottom: 15px;
   padding: 5px 10px;
   box-shadow: 5px 5px 5px #aaa;
+  position: relative;
 }
 .publication-title {
   font-weight: bold;

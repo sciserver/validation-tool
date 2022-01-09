@@ -1,4 +1,6 @@
 import axios from 'axios';
+import router from '@/router'
+import store from '@/store'
 
 let url;
 if(`${process.env.VUE_APP_API_BASE_URL}`) {
@@ -11,6 +13,15 @@ const api = axios.create({
   baseURL: url,
   timeout: 100000
 });
+
+api.interceptors.response.use(null, function (error) {
+  if (error.response.status === 401) {
+    console.log(error)
+    store.dispatch('logout')
+    router.push('/login')
+  }
+  return Promise.reject(error)
+})
 
 export default api;
 export { url };
