@@ -1,20 +1,20 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Home from '@/views/Home.vue'
-import Login from '@/views/Login.vue'
-import Logout from '@/views/Logout.vue'
-import Review from '@/views/Review.vue'
+// import Home from '@/views/Home.vue'
+// import Login from '@/views/Login.vue'
+// import Logout from '@/views/Logout.vue'
+// import Review from '@/views/Review.vue'
 
 import store from '@/store'
 
 Vue.use(VueRouter)
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/login', component: Login },
-  { path: '/logout', component: Logout },
-  { path: '/review', component: Review },
+  { path: '/', component: () => import('@/views/Home.vue') },
+  { path: '/login', component: () => import('@/views/Login.vue') },
+  { path: '/logout', component: () => import('@/views/Logout.vue') },
+  { path: '/review', component: () => import('@/views/Review.vue') },
   {
     path: '/about',
     // route level code-splitting
