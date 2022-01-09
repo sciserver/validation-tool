@@ -35,7 +35,7 @@
               </v-row>
               <v-row no-gutters class="mention">
                 <v-col cols="6" class="mention-text">
-                  {{ review.text }}
+                  <span v-html="review.textHtml"> </span>
                 </v-col>
                 <v-col cols="3">
                   <div class="mention-dataset">{{ review.dataset_alias }}</div>
