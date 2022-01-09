@@ -39,7 +39,7 @@ class ReviewService {
       'value': value
     }
     return api
-      .post('/review/dataset_mention_alias', payload, { headers: authHeader() })
+      .post('/review/generic_metadata', payload, { headers: authHeader() })
       .then(response => {
         return response.data
       })
@@ -48,13 +48,13 @@ class ReviewService {
       })
   }
 
-  sendDatasetParentAliasReview(mentionId, value) {
+  sendDatasetParentAliasReview(publicationDatasetAliasId, value) {
     let payload = {
-      'dataset_mention_generic_metadata_id': mentionId, 
+      'publication_dataset_alias_id': publicationDatasetAliasId, 
       'value': value
     }
     return api
-      .post('/review/dataset_mention_parent_alias', payload, { headers: authHeader() })
+      .post('/review/publication_dataset_alias', payload, { headers: authHeader() })
       .then(response => {
         return response.data
       })

@@ -116,19 +116,25 @@ export default {
       reviewService.sendDatasetAliasReview(review.id, result)
         .then(() => {
           review.dataset_alias = null // hide buttons
-          // check if line should be removed + update counter
+          this.checkPendingAnswer(review)
         })
     },
     validateDatasetParentAlias(review) {
       console.log(review)
       // block buttons before request
       let result = parseInt(review.dataset_parent_alias_result)
-      reviewService.sendDatasetParentAliasReview(review.id, result)
+      reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
         .then(() => {
           review.dataset_parent_alias = null // hide buttons
-          // check if line should be removed + update counter
+          this.checkPendingAnswer(review)
         })
     },
+    checkPendingAnswer(review) {
+      // if everything is answered, row must be hidden/removed
+      if (!review.hasPendingAnswer()) {
+        console.log(`Review ${review.id} is completed!`)
+      }
+    }
   },
 }
 </script>
