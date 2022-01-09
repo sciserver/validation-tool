@@ -130,9 +130,11 @@ export default {
         })
     },
     checkPendingAnswer(review) {
-      // if everything is answered, row must be hidden/removed
       if (!review.hasPendingAnswer()) {
         console.log(`Review ${review.id} is completed!`)
+        let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
+        this.pendingReviews.splice(index, 1) // remove completed review
+        this.totalReviewed++ // increment counter for completed reviews
       }
     }
   },
@@ -142,8 +144,9 @@ export default {
 <style scoped>
 .publication {
   border: 1px solid black;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   padding: 5px 10px;
+  box-shadow: 5px 5px 5px #aaa;
 }
 .publication-title {
   font-weight: bold;
@@ -171,6 +174,6 @@ export default {
 
 }
 .mention-actions {
-
+  margin: 5px 0 10px 0;
 }
 </style>
