@@ -16,56 +16,58 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <!-- start loop -->
-        <div class="publication" v-for="review in pendingReviews" :key="review.id">
-          <div class="publication-title">{{ review.publication_title }}</div>
-          <div class="publication-doi">{{ review.publication_doi }}</div>
-          <div class="mentions">
-            <v-row no-gutters class="mention-header">
-              <v-col cols="6">
-                Dataset mention
-              </v-col>
-              <v-col cols="3">
-                Is this a dataset in this context?
-              </v-col>
-              <v-col cols="3">
-                Is this the same dataset?
-              </v-col>
-            </v-row>
-            <v-row no-gutters class="mention">
-              <v-col cols="6" class="mention-text">
-                {{ review.text }}
-              </v-col>
-              <v-col cols="3">
-                <div class="mention-dataset">{{ review.dataset_alias }}</div>
-                <v-btn-toggle 
-                  class="mention-actions"
-                  dense 
-                  v-model="review.dataset_alias_result"
-                  v-show="!!review.dataset_alias"
-                  @change="validateDatasetAlias(review)">
-                  <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
-                  <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
-                  <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
-                </v-btn-toggle>
-              </v-col>
-              <v-col cols="3">
-                <div class="mention-dataset">{{ review.dataset_parent_alias }}</div>
-                <v-btn-toggle 
-                  class="mention-actions"
-                  dense
-                  v-model="review.dataset_parent_alias_result"
-                  v-show="!!review.dataset_parent_alias"
-                  @change="validateDatasetParentAlias(review)">
-                  <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
-                  <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
-                  <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
-                </v-btn-toggle>
-              </v-col>
-            </v-row>
+        <transition-group name="list" tag="div">
+          <!-- start loop -->
+          <div class="publication" v-for="review in pendingReviews" :key="review.id">
+            <div class="publication-title">{{ review.publication_title }}</div>
+            <div class="publication-doi">{{ review.publication_doi }}</div>
+            <div class="mentions">
+              <v-row no-gutters class="mention-header">
+                <v-col cols="6">
+                  Dataset mention
+                </v-col>
+                <v-col cols="3">
+                  Is this a dataset in this context?
+                </v-col>
+                <v-col cols="3">
+                  Is this the same dataset?
+                </v-col>
+              </v-row>
+              <v-row no-gutters class="mention">
+                <v-col cols="6" class="mention-text">
+                  {{ review.text }}
+                </v-col>
+                <v-col cols="3">
+                  <div class="mention-dataset">{{ review.dataset_alias }}</div>
+                  <v-btn-toggle 
+                    class="mention-actions"
+                    dense 
+                    v-model="review.dataset_alias_result"
+                    v-show="!!review.dataset_alias"
+                    @change="validateDatasetAlias(review)">
+                    <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
+                    <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
+                    <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
+                  </v-btn-toggle>
+                </v-col>
+                <v-col cols="3">
+                  <div class="mention-dataset">{{ review.dataset_parent_alias }}</div>
+                  <v-btn-toggle 
+                    class="mention-actions"
+                    dense
+                    v-model="review.dataset_parent_alias_result"
+                    v-show="!!review.dataset_parent_alias"
+                    @change="validateDatasetParentAlias(review)">
+                    <v-btn color="blue-grey darken-2" dark value="1">Yes</v-btn>
+                    <v-btn color="blue-grey darken-2" dark value="-1">No</v-btn>
+                    <v-btn color="blue-grey darken-2" dark value="0">Unsure</v-btn>
+                  </v-btn-toggle>
+                </v-col>
+              </v-row>
+            </div>
           </div>
-        </div>
-        <!-- end loop -->
+          <!-- end loop -->
+        </transition-group>
       </v-col>  
     </v-row>
   </v-container>
@@ -111,7 +113,7 @@ export default {
     },
     validateDatasetAlias(review) {
       console.log(review)
-      // block buttons before request
+      // TODO block buttons before request
       let result = parseInt(review.dataset_alias_result)
       reviewService.sendDatasetAliasReview(review.id, result)
         .then(() => {
@@ -124,10 +126,14 @@ export default {
           review.dataset_alias = null // hide buttons
           this.checkPendingAnswer(review)
         })
+      //let index = this.pendingReviews.map(e => e.id).indexOf(review.id)
+      //let removed = this.pendingReviews.splice(index, 1) // remove completed review
+      //removed[0].id = removed[0].id * -1
+      //this.pendingReviews.splice(this.pendingReviews.length, 0, removed[0])
     },
     validateDatasetParentAlias(review) {
       console.log(review)
-      // block buttons before request
+      // TODO block buttons before request
       let result = parseInt(review.dataset_parent_alias_result)
       reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
         .then(() => {
@@ -177,7 +183,7 @@ export default {
 .mention {
   border: 1px solid black;
   border-top-width: 0;
-  padding: 0 5px;
+  padding: 5px;
 }
 .mention-text {
 
@@ -187,5 +193,20 @@ export default {
 }
 .mention-actions {
   margin: 5px 0 10px 0;
+}
+.mention-actions button {
+  text-transform: none;
+}
+
+.list-enter-active, .list-leave-active {
+  transition: all 1s;
+}
+.list-enter {
+  opacity: 0;
+  transform: translateX(-50px);
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(50px);
 }
 </style>
