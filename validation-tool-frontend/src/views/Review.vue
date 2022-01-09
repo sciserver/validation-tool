@@ -118,6 +118,12 @@ export default {
           review.dataset_alias = null // hide buttons
           this.checkPendingAnswer(review)
         })
+        .catch((error) => {
+          console.error(error);
+          // Considering it's answered if when there was an error
+          review.dataset_alias = null // hide buttons
+          this.checkPendingAnswer(review)
+        })
     },
     validateDatasetParentAlias(review) {
       console.log(review)
@@ -125,6 +131,12 @@ export default {
       let result = parseInt(review.dataset_parent_alias_result)
       reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
         .then(() => {
+          review.dataset_parent_alias = null // hide buttons
+          this.checkPendingAnswer(review)
+        })
+        .catch((error) => {
+          console.error(error);
+          // Considering it's answered if when there was an error
           review.dataset_parent_alias = null // hide buttons
           this.checkPendingAnswer(review)
         })
