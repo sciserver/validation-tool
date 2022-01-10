@@ -49,11 +49,13 @@ export class ReviewService {
   left join 
       validation v_alias 
       on gm2.generic_metadata_id = v_alias.entity_id 
+      and v_alias.source_id = @EntityID
       and v_alias.notes is null 
       and v_alias.entity_type = 'generic_metadata'
   left join 
       validation v_parent_alias 
       on pda.publication_dataset_alias_id = v_parent_alias.entity_id 
+      and v_parent_alias.source_id = @EntityID
       and v_parent_alias.entity_type = 'publication_dataset_alias'
   where 
       gm.metadata_name = 'text_snippet_to_review'
@@ -69,7 +71,7 @@ export class ReviewService {
     let count = 0;
     const pool = await this.databaseService.getConnection();
     const result = await pool.request().input('EntityID', BigInt, source_id)
-      .query(`select count(distinct gm2.metadata) as items_number
+      .query(`select count(distinct gm2.generic_metadata_id) as items_number
   from 
       generic_metadata gm 
   left join 
@@ -85,11 +87,13 @@ export class ReviewService {
   left join 
       validation v_alias 
       on gm2.generic_metadata_id = v_alias.entity_id 
+      and v_alias.source_id = @EntityID
       and v_alias.notes is null 
       and v_alias.entity_type = 'generic_metadata'
   left join 
       validation v_parent_alias 
       on pda.publication_dataset_alias_id = v_parent_alias.entity_id 
+      and v_parent_alias.source_id = @EntityID
       and v_parent_alias.entity_type = 'publication_dataset_alias'
   where 
       gm.metadata_name = 'text_snippet_to_review'

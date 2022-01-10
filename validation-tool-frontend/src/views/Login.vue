@@ -46,8 +46,8 @@
 export default {
   name: "Login",
   data: () => ({
-    username: 'validation@tool.test',
-    password: 'Password123@#',
+    username: '',
+    password: '',
     loginInProgress: false,
   }),
   created() {
