@@ -20,26 +20,34 @@
           <!-- start loop -->
           <div class="publication" v-for="review in topReviews" :key="review.id">
             <v-overlay absolute :opacity="overlayOpacity" :value="review.overlay"></v-overlay>
-            <div class="publication-title">{{ review.publication_title }}</div>
-            <div class="publication-doi">{{ review.publication_doi }}</div>
+            <div class="publication-title">
+              <a v-show="!!review.publication_doi" :href="`https://doi.org/${review.publication_doi}`" target="_blank">{{ review.publication_title }}</a>
+              <span v-show="!review.publication_doi">{{ review.publication_title }}</span>
+            </div>
+            <!-- <div class="publication-doi">{{ review.publication_doi }}</div> -->
             <div class="mentions">
               <v-row no-gutters class="mention-header">
                 <v-col cols="6">
-                  Dataset mention
+                  Does the bolded text in the snippet below refer to a dataset?
+                </v-col>
+                <v-col cols="3 pr-2" >
+                  The bolded text correctly identifies a reference to a dataset?
                 </v-col>
                 <v-col cols="3">
-                  Is this a dataset in this context?
-                </v-col>
-                <v-col cols="3">
-                  Is this the same dataset?
+                  The bolded text is the same dataset as the one referenced?
                 </v-col>
               </v-row>
               <v-row no-gutters class="mention">
-                <v-col cols="6" class="mention-text">
-                  <span v-html="review.textHtml"> </span>
+                <v-col cols="6" class="mention-text overflow-hidden pr-10">
+                  <span v-html="review.textHtml"></span>
                 </v-col>
                 <v-col cols="3">
-                  <div class="mention-dataset">{{ review.dataset_alias }}</div>
+                  <div class="mention-dataset">
+                    <!-- {{ review.dataset_alias }} -->
+                    <a v-show="!!review.dataset_alias_url" :href="`${review.dataset_alias_url}`" target="_blank">{{ review.dataset_alias }}</a>
+                    <span v-show="!review.dataset_alias_url">{{ review.dataset_alias }}</span>
+                  </div>
+                  
                   <v-btn-toggle dense
                     class="mention-actions" 
                     v-model="review.dataset_alias_result"
@@ -58,16 +66,24 @@
                     color="green darken-2">
                     mdi-check-bold
                   </v-icon>
-                  <v-icon large 
+                  <!-- <v-icon large 
                     class="empty-dataset"
                     title="Nothing to review here"
                     v-show="!review.dataset_alias"
                     color="grey lighten-1">
                     mdi-minus-box
-                  </v-icon>
+                  </v-icon> -->
+                   <span
+                  title="Nothing to review here"
+                    v-show="!review.dataset_alias">
+                    N/A
+                  </span>
                 </v-col>
                 <v-col cols="3">
-                  <div class="mention-dataset">{{ review.dataset_parent_alias }}</div>
+                  <div class="mention-dataset">
+                    <a v-show="!!review.dataset_parent_alias_url" :href="`${review.dataset_parent_alias_url}`" target="_blank">{{ review.dataset_parent_alias }}</a>
+                    <span v-show="!review.dataset_parent_alias_url">{{ review.dataset_parent_alias }}</span>
+                  </div>
                   <v-btn-toggle dense
                     class="mention-actions"
                     v-model="review.dataset_parent_alias_result"
@@ -86,13 +102,18 @@
                     color="green darken-2">
                     mdi-check-bold
                   </v-icon>
-                  <v-icon large 
+                  <!-- <v-icon large 
                     class="empty-dataset"
                     title="Nothing to review here"
                     v-show="!review.dataset_parent_alias"
                     color="grey lighten-1">
                     mdi-minus-box
-                  </v-icon>
+                  </v-icon> -->
+                  <span
+                  title="Nothing to review here"
+                    v-show="!review.dataset_parent_alias">
+                    N/A
+                  </span>
                 </v-col>
               </v-row>
             </div>
