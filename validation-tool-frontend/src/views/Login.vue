@@ -1,20 +1,25 @@
 <template>
-  <v-container fluid fill-height>
-    <v-layout align-center justify-center>
-      <v-flex xs12 sm8 md4>
+  <v-container>
+    <v-layout align-center justify-center column>
+      <v-flex justify-center>
+            <p align="center">Welcome to the  Validation Tool project. Thank you for participating in this game-changing effort to show the value of public data using automated tools
+            </p>
+            <p align="center">
+              You will be reviewing text snippets that have identified a reference to a dataset in a publication. You have two simple tasks for each snippet. The first is to confirm whether the machine learning algorithm was correct in finding the dataset reference.  The second is to confirm whether the dataset reference is to the dataset identified by the relevant agency.
+            </p>
+            <p align="center">
+              You will be given up to 100 snippets to review initially, and then additional snippets in batches of 100.  
+            </p>
+            <p align="center">
+If you have any questions, please email us at <a href="mailto:support@coleridgeinitiative.org">support@coleridgeinitiative.org</a>
+            </p>
+            <p align="center">
+Login here to start the review process – and thank you so much for contributing to the public good.
+              </p>
+      </v-flex>
+      <v-flex style="width:  400px;">
         <v-form ref="loginForm">
-          <div class="welcome-text text-center">
-            <p>Welcome to the Coleridge Initiative Validation Tool project. 
-               Thank you for participating in this game-changing effort to show the value of public data using transparent processes using machine learning tools.
-            </p>
-            <p>
-              You will be reviewing text snippets that have identified a reference to a dataset in a publication. 
-              Your task for each snippet is to validate whether the machine learning algorithm was correct, and to match the reference to a known dataset.
-            </p>
-            <p>
-              Login here to start the review process – and thank you so much for contributing to the public good.
-            </p>
-          </div>
+          
           <v-card class="elevation-12">
             <v-toolbar dark color="blue-grey darken-2">
               <v-toolbar-title>Login</v-toolbar-title>

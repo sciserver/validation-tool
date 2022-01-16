@@ -15,7 +15,7 @@
       </v-col>
       <v-col cols="10" offset="1" v-show="noPendingReviews">
         <v-alert class="all-reviewed" type="success">
-          Congratulations! You have reviewed all items assigned to you. Contact our staff to receive new items.
+          Thank you for your valuable contribution! We will assign another batch shortly.
         </v-alert>
       </v-col>
     </v-row>
@@ -57,7 +57,7 @@
               </v-row>
               <v-row no-gutters class="mention">
                 <v-col cols="6" class="mention-text overflow-hidden pr-10">
-                  <span v-html="review.textAsHtml"></span>
+                  <span class="overflow-hidden" style="display: inherit;" v-html="review.textAsHtml"></span>
                 </v-col>
                 <v-col cols="3">
                   <div class="mention-dataset">
