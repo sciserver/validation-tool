@@ -1,21 +1,20 @@
 <template>
-
   <v-container fluid fill-height>
-    
     <v-layout align-center justify-center>
       <v-flex xs12 sm8 md4>
         <v-form ref="loginForm">
-          <v-container class="home text-center" fluid>
-    <p>
-      Welcome to the Coleridge Initiative Validation Tool project. Thank you for participating in this game-changing effort to show the value of public data using transparent processes using machine learning tools
-    </p>
-    <p>
-      You will be reviewing text snippets that have identified a reference to a dataset in a publication.  Your task for each snippet is to validate whether the machine learning algorithm was correct, and to match the reference to a known dataset.
-      </p>
-      <p>
-        Login here to start the review process – and thank you so much for contributing to the public good.
-        </p>
-  </v-container>
+          <div class="welcome-text text-center">
+            <p>Welcome to the Coleridge Initiative Validation Tool project. 
+               Thank you for participating in this game-changing effort to show the value of public data using transparent processes using machine learning tools.
+            </p>
+            <p>
+              You will be reviewing text snippets that have identified a reference to a dataset in a publication. 
+              Your task for each snippet is to validate whether the machine learning algorithm was correct, and to match the reference to a known dataset.
+            </p>
+            <p>
+              Login here to start the review process – and thank you so much for contributing to the public good.
+            </p>
+          </div>
           <v-card class="elevation-12">
             <v-toolbar dark color="blue-grey darken-2">
               <v-toolbar-title>Login</v-toolbar-title>
@@ -87,3 +86,19 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.welcome-text {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+}
+
+.welcome-text p {
+  font-size: 20px;
+  margin-top: 10px;
+  padding: 0 40px;
+}
+</style>

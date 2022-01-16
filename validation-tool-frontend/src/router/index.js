@@ -11,7 +11,7 @@ const routes = [
   { path: '/login', component: () => import('@/views/Login.vue') },
   { path: '/logout', component: () => import('@/views/Logout.vue') },
   { path: '/review', component: () => import('@/views/Review.vue') },
-  { path: '/about', component: () => import('@/views/About.vue') }
+  // { path: '/about', component: () => import('@/views/About.vue') }
 ]
 
 const router = new VueRouter({

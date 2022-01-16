@@ -6,9 +6,12 @@ class ReviewService {
       // nothing to do
   }
 
-  getPendingReviews() {
+  getPendingReviews(pageSize, nextPage) {
     let config = {
-      //params: { 'amount': 50 },
+      params: { 
+        'page_size': pageSize,
+        'page_number': nextPage
+      },
       headers: authHeader(),
     }
     return api

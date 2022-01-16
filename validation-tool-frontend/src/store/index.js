@@ -29,7 +29,6 @@ export default new Vuex.Store({
         .then(resp => {
           const token = resp.access_token
           let payload = jwtDecode(token)
-          console.log(payload)
           const user = { ...payload }
           localStorage.setItem('token', token)
           commit('auth_success', { token, user })
