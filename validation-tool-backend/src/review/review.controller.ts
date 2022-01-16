@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { User } from 'src/users/user.interface';
 import {
@@ -12,17 +20,31 @@ export class ReviewController {
   constructor(private reviewService: ReviewService) {}
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getReviewItens(@Req() req) {
+  async getReviewItens(
+    @Req() req,
+    @Query('page_size') page_size,
+    @Query('page_number') page_number,
+  ) {
+    if (!page_size) {
+      page_size = 10;
+    }
+    if (!page_number) {
+      page_number = 0;
+    }
     const user: User = req.user;
-    return await this.reviewService.getReviewItens(user.source_id);
+    return await this.reviewService.getReviewItens(
+      user.source_id,
+      page_size,
+      page_number,
+    );
   }
 
   @Get('/count')
   @UseGuards(JwtAuthGuard)
   async getReviewItensCount(@Req() req) {
     const user: User = req.user;
-    const count = await this.reviewService.getReviewItensCount(user.source_id);
-    return { count: count };
+    const result = await this.reviewService.getReviewItensCount(user.source_id);
+    return result;
   }
 
   @Post('/generic_metadata')

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BigInt, VarChar } from 'mssql';
 import { DatabaseService } from 'src/database/database.service';
 import {
@@ -12,11 +12,18 @@ import {
 export class ReviewService {
   constructor(private databaseService: DatabaseService) {}
 
-  async getReviewItens(source_id: number): Promise<ReviewItem[]> {
+  async getReviewItens(
+    source_id: number,
+    page_size = 10,
+    page_number = 0,
+  ): Promise<ReviewItem[]> {
     let items: ReviewItem[] = [];
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().input('EntityID', BigInt, source_id)
-      .query(`select DISTINCT top 10
+    const result = await pool
+      .request()
+      .input('EntityID', BigInt, source_id)
+      .input('Fetch', BigInt, page_size)
+      .input('Offset', BigInt, page_number * page_size).query(`select distinct
       gm.entity_id as user_metadata_source_id,
       gm2.generic_metadata_id as dataset_mention_generic_metadata_id,
       gm2.metadata  as dataset_mention,
@@ -24,99 +31,97 @@ export class ReviewService {
       p.publication_id as publication_id,
       p.title as publication_title,
       p.doi as publication_doi,
+      da.alias as dataset_mention_alias,
+      da.url as dataset_mention_alias_url,
+      CASE 
+        WHEN v_alias.value is null
+          THEN CAST(0 AS BIT)
+        ELSE CAST(1 AS BIT)
+      END as answered,
       case
-          when v_alias.value is null
-              then da.alias 
-          else NULL
-      end as dataset_mention_alias,
-      case
-        when v_alias.value is null
-          then da.url 
-        else NULL
-      end as dataset_mention_alias_url,
-      case
-          when v_parent_alias.value is null
-              then da2.alias 
-          else NULL
+        when da2.alias is null
+          then da.alias 
+        else da2.alias
       end as dataset_mention_parent_alias,
       case
-        when v_parent_alias.value is null
-          then da2.url 
-        else NULL
+        when da2.alias is null
+          then da.url 
+        else da2.url 
       end as dataset_mention_parent_alias_url
-  from 
+    from 
       generic_metadata gm 
-  left join 
+    left join 
       generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id 
-  left join 
+    left join 
       publication_dataset_alias pda on pda.publication_dataset_alias_id = gm2.entity_id 
-  left join
+    left join
       publication p on p.publication_id = pda.publication_id 
-  left JOIN 
+    left JOIN 
       dataset_alias da on da.alias_id = pda.alias_id
-  LEFT JOIN
+    LEFT JOIN
       dataset_alias da2 on da2.alias_id = da.parent_alias_id and da.alias_id <> da.parent_alias_id 
-  left join 
+    left join 
       validation v_alias 
       on gm2.generic_metadata_id = v_alias.entity_id 
       and v_alias.source_id = @EntityID
-      and v_alias.notes is null 
       and v_alias.entity_type = 'generic_metadata'
-  left join 
-      validation v_parent_alias 
-      on pda.publication_dataset_alias_id = v_parent_alias.entity_id 
-      and v_parent_alias.source_id = @EntityID
-      and v_parent_alias.entity_type = 'publication_dataset_alias'
-  where 
+    where 
       gm.metadata_name = 'text_snippet_to_review'
       AND gm.entity_id = @EntityID
-      AND (v_alias.value is null or (da2.alias_id is not null and v_parent_alias.value is null))`);
+    ORDER BY dataset_mention_generic_metadata_id
+    OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
     if (result.recordset && result.recordset.length > 0) {
       items = result.recordset as ReviewItem[];
     }
     return items;
   }
 
-  async getReviewItensCount(source_id: number): Promise<number> {
-    let count = 0;
+  async getReviewItensCount(
+    source_id: number,
+  ): Promise<{ total: number; answered: number }> {
     const pool = await this.databaseService.getConnection();
     const result = await pool.request().input('EntityID', BigInt, source_id)
-      .query(`select count(distinct gm2.generic_metadata_id) as items_number
-  from 
-      generic_metadata gm 
-  left join 
-      generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id 
-  left join 
-      publication_dataset_alias pda on pda.publication_dataset_alias_id = gm2.entity_id 
-  left join
-      publication p on p.publication_id = pda.publication_id 
-  left JOIN 
-      dataset_alias da on da.alias_id = pda.alias_id
-  LEFT JOIN
-      dataset_alias da2 on da2.alias_id = da.parent_alias_id and da.alias_id <> da.parent_alias_id 
-  left join 
-      validation v_alias 
-      on gm2.generic_metadata_id = v_alias.entity_id 
-      and v_alias.source_id = @EntityID
-      and v_alias.notes is null 
-      and v_alias.entity_type = 'generic_metadata'
-  left join 
-      validation v_parent_alias 
-      on pda.publication_dataset_alias_id = v_parent_alias.entity_id 
-      and v_parent_alias.source_id = @EntityID
-      and v_parent_alias.entity_type = 'publication_dataset_alias'
-  where 
-      gm.metadata_name = 'text_snippet_to_review'
-      AND gm.entity_id = @EntityID
-      AND (v_alias.value is null or (da2.alias_id is not null and v_parent_alias.value is null));`);
+      .query(`select count(distinct gm2.generic_metadata_id) as items_number,
+      sum(
+        case when (v_alias.value is null)
+        then 0
+        else 1 end
+      ) as answered,
+      gm.entity_id 
+      from 
+          generic_metadata gm 
+      left join 
+          generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id 
+      left join 
+          publication_dataset_alias pda on pda.publication_dataset_alias_id = gm2.entity_id 
+      left join
+          publication p on p.publication_id = pda.publication_id 
+      left JOIN 
+          dataset_alias da on da.alias_id = pda.alias_id
+      LEFT JOIN
+          dataset_alias da2 on da2.alias_id = da.parent_alias_id and da.alias_id <> da.parent_alias_id 
+      left join 
+          validation v_alias 
+          on gm2.generic_metadata_id = v_alias.entity_id 
+          and v_alias.source_id = @EntityID
+          and v_alias.entity_type = 'generic_metadata'
+      where 
+          gm.metadata_name = 'text_snippet_to_review'
+          AND gm.entity_id = @EntityID
+      group by gm.entity_id`);
+    const count_result = {
+      total: 0,
+      answered: 0,
+    };
     if (
       result.recordset &&
       result.recordset.length > 0 &&
       result.recordset[0].items_number
     ) {
-      count = result.recordset[0].items_number;
+      count_result.total = result.recordset[0].items_number;
+      count_result.answered = result.recordset[0].answered;
     }
-    return count;
+    return count_result;
   }
 
   async addDatasetMentionAliasReview(
@@ -137,6 +142,23 @@ export class ReviewService {
     return result.rowsAffected;
   }
 
+  async updateDatasetMentionAliasReview(
+    source_id: number,
+    validation: ValidationGenericMetadataDto,
+  ) {
+    const pool = await this.databaseService.getConnection();
+    const result = await pool
+      .request()
+      .input('SourceID', BigInt, source_id)
+      .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
+      .input('Value', BigInt, validation.value)
+      .query(`update validation set value = @Value 
+      where source_id = @SourceID 
+      and entity_type = 'generic_metadata' 
+      and entity_id = @EntityID`);
+    return result.rowsAffected;
+  }
+
   async reviewDatasetMentionAlias(
     source_id: number,
     validation: ValidationGenericMetadataDto,
@@ -149,10 +171,7 @@ export class ReviewService {
     if (!row) {
       return this.addDatasetMentionAliasReview(source_id, validation);
     } else {
-      throw new HttpException(
-        'Validation already exists for this user',
-        HttpStatus.CONFLICT,
-      );
+      return this.updateDatasetMentionAliasReview(source_id, validation);
     }
   }
 
@@ -178,19 +197,7 @@ export class ReviewService {
     source_id: number,
     validation: ValidationPublicationDatasetAliasDto,
   ) {
-    const row = await this.getValidation(
-      source_id,
-      'publication_dataset_alias',
-      validation.publication_dataset_alias_id,
-    );
-    if (!row) {
-      return this.addDatasetMentionParentAliasReview(source_id, validation);
-    } else {
-      throw new HttpException(
-        'Validation already exists for this user',
-        HttpStatus.CONFLICT,
-      );
-    }
+    return this.addDatasetMentionParentAliasReview(source_id, validation);
   }
 
   async getValidation(

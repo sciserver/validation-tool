@@ -10,6 +10,7 @@ export interface ReviewItem {
   dataset_mention_parent_alias: string;
   dataset_mention_parent_alias_url: string;
   publication_dataset_alias_id: number;
+  answered: boolean;
 }
 
 export interface ValidationGenericMetadataDto {
