@@ -1,7 +1,7 @@
 <template>
   <v-container class="home" fluid>
     <p>
-      Welcome to the Coleridge Initiative Validation Tool project. <br>
+      Welcome to the validation tool of the <a href="https://coleridgeinitiative.org/show-us-the-data/">Show US the Data</a> project.<br>
       This tool is part of the Rich Context project and it's intended to review publication-dataset metadata. <br> 
       Please, log in if you are a reviewer to start the review process.
     </p>

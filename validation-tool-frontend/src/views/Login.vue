@@ -18,14 +18,14 @@ Login here to start the review process – and thank you so much for contributin
               </p>
       </v-flex>
       <v-flex style="width:  400px;">
-        <v-form ref="loginForm">
+        <v-form ref="loginForm" @submit.prevent="authenticate">
           
           <v-card class="elevation-12">
             <v-toolbar dark color="blue-grey darken-2">
               <v-toolbar-title>Login</v-toolbar-title>
             </v-toolbar>
             <v-card-text>
-              <v-form>
+              <!-- <v-form> -->
                 <v-text-field
                   prepend-icon="mdi-account-circle"
                   name="username"
@@ -41,15 +41,15 @@ Login here to start the review process – and thank you so much for contributin
                   type="password"
                   v-model="password"
                 ></v-text-field>
-              </v-form>
+              <!-- </v-form> -->
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn 
-                color="blue-grey darken-2" 
+                color="blue-grey darken-2"
                 dark 
                 :loading="loginInProgress"
-                @click="authenticate"
+                type="submit"
               >Login</v-btn>
             </v-card-actions>
           </v-card>

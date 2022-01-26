@@ -15,7 +15,7 @@
       </v-col>
       <v-col cols="10" offset="1" v-show="noPendingReviews">
         <v-alert class="all-reviewed" type="success">
-          Thank you for your valuable contribution! We will assign another batch shortly.
+          Thank you so very much for your valuable contribution! We will give you another batch to review shortly
         </v-alert>
       </v-col>
     </v-row>
@@ -40,8 +40,8 @@
               </v-btn>
             </v-overlay>
             <div class="publication-title">
-              <a v-show="!!review.publication_doi" :href="`https://doi.org/${review.publication_doi}`" target="_blank">{{ review.publication_title }}</a>
-              <span v-show="!review.publication_doi">{{ review.publication_title }}</span>
+              <a v-show="!!review.publication_doi" :href="`https://doi.org/${review.publication_doi}`" target="_blank">{{ review.publication_title }} ({{review.publication_year}})</a>
+              <span v-show="!review.publication_doi">{{ review.publication_title }} ({{review.publication_year}})</span>
             </div>
             <div class="mentions">
               <v-row no-gutters class="mention-header">
@@ -202,6 +202,7 @@ export default {
         .then(() => {
           review.dataset_alias_loading = false
           review.dataset_alias_check = true
+          review.dataset_mention_answered = true
           setTimeout(() => { this.checkAnswers(review) }, 500)
         })
         .catch((error) => {
@@ -209,6 +210,7 @@ export default {
           if (error.status === 409) {
             review.dataset_alias_loading = false
             review.dataset_alias_check = true
+            review.dataset_mention_answered = true
             setTimeout(() => { this.checkAnswers(review) }, 500)
           } else {
             throw error
@@ -226,10 +228,11 @@ export default {
     async validateDatasetParentAlias(review) {
       review.dataset_parent_alias_loading = true
       let result = parseInt(review.dataset_parent_alias_result)
-      reviewService.sendDatasetParentAliasReview(review.publication_dataset_alias_id, result)
+      reviewService.sendDatasetParentAliasReview(review.id, result)
         .then(() => {
           review.dataset_parent_alias_loading = false
           review.dataset_parent_alias_check = true
+          review.dataset_mention_parent_answered = true
           setTimeout(() => { this.checkAnswers(review) }, 500)
         })
         .catch((error) => {
@@ -237,6 +240,7 @@ export default {
           if (error.status === 409) {
             review.dataset_parent_alias_loading = false
             review.dataset_parent_alias_check = true
+            review.dataset_mention_parent_answered = true
             setTimeout(() => { this.checkAnswers(review) }, 500)
           } else {
             throw error
@@ -254,11 +258,14 @@ export default {
       if (review.hasPendingAnswer()) {
         return
       }
-      if (!review.answered) {
+      if (review.dataset_mention_answered 
+        && review.dataset_mention_parent_answered
+        && !(review.beingEdited)) {
         this.totalReviewed++ // increment counter for completed reviews
       }
-      review.answered = true
+      // review.answered = true
       review.overlay = true
+      
 
       //setTimeout(() => { this.totalPending = this.totalReviewed }, 2000)
     },
@@ -268,6 +275,7 @@ export default {
       review.dataset_alias_check = false
       review.dataset_parent_alias_check = false
       review.overlay = false
+      review.beingEdited = true
     },
     loadPage() {
       this.pendingReviews = []

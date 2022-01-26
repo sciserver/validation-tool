@@ -4,7 +4,6 @@ import { DatabaseService } from 'src/database/database.service';
 import {
   ReviewItem,
   ValidationGenericMetadataDto,
-  ValidationPublicationDatasetAliasDto,
   ValidationTableItemDto,
 } from './review.interface';
 
@@ -30,6 +29,7 @@ export class ReviewService {
       pda.publication_dataset_alias_id as publication_dataset_alias_id,
       p.publication_id as publication_id,
       p.title as publication_title,
+      p.year as publication_year,
       p.doi as publication_doi,
       da.alias as dataset_mention_alias,
       da.url as dataset_mention_alias_url,
@@ -37,7 +37,12 @@ export class ReviewService {
         WHEN v_alias.value is null
           THEN CAST(0 AS BIT)
         ELSE CAST(1 AS BIT)
-      END as answered,
+      END as dataset_mention_answered,
+      CASE 
+        WHEN v_alias_parent.value is null
+          THEN CAST(0 AS BIT)
+        ELSE CAST(1 AS BIT)
+      END as dataset_mention_parent_answered,
       case
         when da2.alias is null
           then da.alias 
@@ -65,6 +70,13 @@ export class ReviewService {
       on gm2.generic_metadata_id = v_alias.entity_id 
       and v_alias.source_id = @EntityID
       and v_alias.entity_type = 'generic_metadata'
+      and v_alias.validation_type = 'text_snippet_dataset_alias'
+    left join 
+      validation v_alias_parent 
+      on gm2.generic_metadata_id = v_alias_parent.entity_id 
+      and v_alias_parent.source_id = @EntityID
+      and v_alias_parent.entity_type = 'generic_metadata'
+      and v_alias_parent.validation_type = 'dataset_alias_official_name'
     where 
       gm.metadata_name = 'text_snippet_to_review'
       AND gm.entity_id = @EntityID
@@ -83,7 +95,7 @@ export class ReviewService {
     const result = await pool.request().input('EntityID', BigInt, source_id)
       .query(`select count(distinct gm2.generic_metadata_id) as items_number,
       sum(
-        case when (v_alias.value is null)
+        case when (v_alias.value is null or v_alias_parent.value is null)
         then 0
         else 1 end
       ) as answered,
@@ -100,11 +112,18 @@ export class ReviewService {
           dataset_alias da on da.alias_id = pda.alias_id
       LEFT JOIN
           dataset_alias da2 on da2.alias_id = da.parent_alias_id and da.alias_id <> da.parent_alias_id 
-      left join 
+        left join 
           validation v_alias 
           on gm2.generic_metadata_id = v_alias.entity_id 
           and v_alias.source_id = @EntityID
           and v_alias.entity_type = 'generic_metadata'
+          and v_alias.validation_type = 'text_snippet_dataset_alias'
+        left join 
+          validation v_alias_parent 
+          on gm2.generic_metadata_id = v_alias_parent.entity_id 
+          and v_alias_parent.source_id = @EntityID
+          and v_alias_parent.entity_type = 'generic_metadata'
+          and v_alias_parent.validation_type = 'dataset_alias_official_name'
       where 
           gm.metadata_name = 'text_snippet_to_review'
           AND gm.entity_id = @EntityID
@@ -135,9 +154,9 @@ export class ReviewService {
       .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
       .query(`INSERT INTO richcontext_dev_redesign.dbo.validation
-      (validation_id, entity_id, source_id, entity_type, value)
+      (validation_id, entity_id, source_id, entity_type, value, validation_type)
       SELECT 
-      MAX( validation_id ) + 1, @EntityID, @SourceID, 'generic_metadata', @Value 
+      MAX( validation_id ) + 1, @EntityID, @SourceID, 'generic_metadata', @Value, 'text_snippet_dataset_alias' 
       FROM richcontext_dev_redesign.dbo.validation;`);
     return result.rowsAffected;
   }
@@ -155,6 +174,7 @@ export class ReviewService {
       .query(`update validation set value = @Value 
       where source_id = @SourceID 
       and entity_type = 'generic_metadata' 
+      and validation_type = 'text_snippet_dataset_alias'
       and entity_id = @EntityID`);
     return result.rowsAffected;
   }
@@ -167,6 +187,7 @@ export class ReviewService {
       source_id,
       'generic_metadata',
       validation.dataset_mention_generic_metadata_id,
+      'text_snippet_dataset_alias',
     );
     if (!row) {
       return this.addDatasetMentionAliasReview(source_id, validation);
@@ -177,33 +198,62 @@ export class ReviewService {
 
   async addDatasetMentionParentAliasReview(
     source_id: number,
-    validation: ValidationPublicationDatasetAliasDto,
+    validation: ValidationGenericMetadataDto,
   ) {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
       .input('SourceID', BigInt, source_id)
-      .input('EntityID', BigInt, validation.publication_dataset_alias_id)
+      .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
       .query(`INSERT INTO richcontext_dev_redesign.dbo.validation
-      (validation_id, entity_id, source_id, entity_type, value)
+      (validation_id, entity_id, source_id, entity_type, value, validation_type)
       SELECT 
-      MAX( validation_id ) + 1, @EntityID, @SourceID, 'publication_dataset_alias', @Value 
+      MAX( validation_id ) + 1, @EntityID, @SourceID, 'generic_metadata', @Value, 'dataset_alias_official_name' 
       FROM richcontext_dev_redesign.dbo.validation;`);
+    return result.rowsAffected;
+  }
+
+  async updateDatasetMentionParentAliasReview(
+    source_id: number,
+    validation: ValidationGenericMetadataDto,
+  ) {
+    const pool = await this.databaseService.getConnection();
+    const result = await pool
+      .request()
+      .input('SourceID', BigInt, source_id)
+      .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
+      .input('Value', BigInt, validation.value)
+      .query(`update validation set value = @Value 
+      where source_id = @SourceID 
+      and entity_type = 'generic_metadata' 
+      and validation_type = 'dataset_alias_official_name'
+      and entity_id = @EntityID`);
     return result.rowsAffected;
   }
 
   async reviewDatasetMentionParentAlias(
     source_id: number,
-    validation: ValidationPublicationDatasetAliasDto,
+    validation: ValidationGenericMetadataDto,
   ) {
-    return this.addDatasetMentionParentAliasReview(source_id, validation);
+    const row = await this.getValidation(
+      source_id,
+      'generic_metadata',
+      validation.dataset_mention_generic_metadata_id,
+      'dataset_alias_official_name',
+    );
+    if (!row) {
+      return this.addDatasetMentionParentAliasReview(source_id, validation);
+    } else {
+      return this.updateDatasetMentionParentAliasReview(source_id, validation);
+    }
   }
 
   async getValidation(
     source_id: number,
     entity_type: string,
     entity_id: number,
+    validation_type: string,
   ): Promise<ValidationTableItemDto> {
     let item: ValidationTableItemDto = undefined;
     const pool = await this.databaseService.getConnection();
@@ -211,13 +261,15 @@ export class ReviewService {
       .request()
       .input('EntityID', BigInt, entity_id)
       .input('SourceID', BigInt, source_id)
-      .input('EntityType', VarChar, entity_type).query(`SELECT 
+      .input('EntityType', VarChar, entity_type)
+      .input('ValidationType', VarChar, validation_type).query(`SELECT 
       validation_id, entity_id, source_id, entity_type, value
       FROM richcontext_dev_redesign.dbo.validation v
       WHERE 
           v.source_id = @SourceID
           and v.entity_id = @EntityID
-          and v.entity_type = @EntityType`);
+          and v.entity_type = @EntityType
+          and v.validation_type = @ValidationType`);
     if (result.recordset && result.recordset.length > 0) {
       item = result.recordset[0];
     }

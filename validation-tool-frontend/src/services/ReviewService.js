@@ -3,12 +3,12 @@ import authHeader from '@/helpers/auth-header'
 
 class ReviewService {
   constructor() {
-      // nothing to do
+    // nothing to do
   }
 
   getPendingReviews(pageSize, nextPage) {
     let config = {
-      params: { 
+      params: {
         'page_size': pageSize,
         'page_number': nextPage
       },
@@ -37,7 +37,7 @@ class ReviewService {
 
   sendDatasetAliasReview(mentionId, value) {
     let payload = {
-      'dataset_mention_generic_metadata_id': mentionId, 
+      'dataset_mention_generic_metadata_id': mentionId,
       'value': value
     }
     return api
@@ -50,9 +50,9 @@ class ReviewService {
       })
   }
 
-  sendDatasetParentAliasReview(publicationDatasetAliasId, value) {
+  sendDatasetParentAliasReview(mentionId, value) {
     let payload = {
-      'publication_dataset_alias_id': publicationDatasetAliasId, 
+      'dataset_mention_generic_metadata_id': mentionId,
       'value': value
     }
     return api

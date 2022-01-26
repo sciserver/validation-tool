@@ -9,10 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { User } from 'src/users/user.interface';
-import {
-  ValidationGenericMetadataDto,
-  ValidationPublicationDatasetAliasDto,
-} from './review.interface';
+import { ValidationGenericMetadataDto } from './review.interface';
 import { ReviewService } from './review.service';
 
 @Controller('review')
@@ -62,7 +59,7 @@ export class ReviewController {
   @UseGuards(JwtAuthGuard)
   async reviewDatasetMentionParentAlias(
     @Req() req,
-    @Body() body: ValidationPublicationDatasetAliasDto,
+    @Body() body: ValidationGenericMetadataDto,
   ) {
     const user: User = req.user;
     await this.reviewService.reviewDatasetMentionParentAlias(

@@ -10,7 +10,9 @@ export interface ReviewItem {
   dataset_mention_parent_alias: string;
   dataset_mention_parent_alias_url: string;
   publication_dataset_alias_id: number;
-  answered: boolean;
+  dataset_mention_answered: boolean;
+  dataset_mention_parent_answered: boolean;
+  publication_year: number;
 }
 
 export interface ValidationGenericMetadataDto {
@@ -18,10 +20,10 @@ export interface ValidationGenericMetadataDto {
   value: number;
 }
 
-export interface ValidationPublicationDatasetAliasDto {
-  value: number;
-  publication_dataset_alias_id: number;
-}
+// export interface ValidationPublicationDatasetAliasDto {
+//   value: number;
+//   dataset_mention_generic_metadata_id: number;
+// }
 
 export interface ValidationTableItemDto {
   validation_id: number;
