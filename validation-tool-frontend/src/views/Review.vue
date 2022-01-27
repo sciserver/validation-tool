@@ -61,8 +61,9 @@
                 </v-col>
                 <v-col cols="3">
                   <div class="mention-dataset">
-                    <a v-show="!!review.dataset_alias_url" :href="`${review.dataset_alias_url}`" target="_blank">{{ review.dataset_alias }}</a>
-                    <span v-show="!review.dataset_alias_url">{{ review.dataset_alias }}</span>
+                    <!-- <a v-show="!!review.dataset_alias_url" :href="`${review.dataset_alias_url}`" target="_blank">{{ review.dataset_alias }}</a>
+                    <span v-show="!review.dataset_alias_url">{{ review.dataset_alias }}</span> -->
+                    <span>{{ review.dataset_alias }}</span>
                   </div>
                   <v-btn-toggle dense
                     class="mention-actions" 

@@ -25,6 +25,7 @@ Login here to start the review process – and thank you so much for contributin
               <v-toolbar-title>Login</v-toolbar-title>
             </v-toolbar>
             <v-card-text>
+              <span style="color: red;" v-show="authError">Invalid Username or Password</span>
               <!-- <v-form> -->
                 <v-text-field
                   prepend-icon="mdi-account-circle"
@@ -66,6 +67,7 @@ export default {
     username: '',
     password: '',
     loginInProgress: false,
+    authError: false,
   }),
   created() {
     if (this.$store.getters.isLoggedIn) {
@@ -75,6 +77,7 @@ export default {
   methods: {
     authenticate() {
       this.loginInProgress = true
+      this.authError = false
       let username = this.username
       let password = this.password
       this.$store.dispatch('login', { username, password })
@@ -84,6 +87,7 @@ export default {
             this.$router.push('/review')
           } else {
             // show login error
+            this.authError = true
             console.log('LOGIN ERROR')
           }
         })
