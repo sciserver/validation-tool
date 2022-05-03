@@ -40,8 +40,8 @@
               </v-btn>
             </v-overlay>
             <div class="publication-title">
-              <a v-show="!!review.publication_doi" :href="`https://doi.org/${review.publication_doi}`" target="_blank">{{ review.publication_title }} ({{review.publication_year}})</a>
-              <span v-show="!review.publication_doi">{{ review.publication_title }} ({{review.publication_year}})</span>
+              <a v-show="!!review.publication_doi" :href="`https://doi.org/${review.publication_doi}`" target="_blank">{{ review.publication_title }}</a>
+              <span v-show="!review.publication_doi">{{ review.publication_title }}</span>
             </div>
             <div class="mentions">
               <v-row no-gutters class="mention-header">
@@ -208,12 +208,13 @@ export default {
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
-          if (error.status === 409) {
+          if (error?.status === 409) {
             review.dataset_alias_loading = false
             review.dataset_alias_check = true
             review.dataset_mention_answered = true
             setTimeout(() => { this.checkAnswers(review) }, 500)
           } else {
+            review.dataset_alias_loading = false
             throw error
           }
         })
@@ -238,12 +239,13 @@ export default {
         })
         .catch((error) => {
           console.warn(error); // an error means it's already answered
-          if (error.status === 409) {
+          if (error?.status === 409) {
             review.dataset_parent_alias_loading = false
             review.dataset_parent_alias_check = true
             review.dataset_mention_parent_answered = true
             setTimeout(() => { this.checkAnswers(review) }, 500)
           } else {
+            review.dataset_parent_alias_loading = false
             throw error
           } 
         })

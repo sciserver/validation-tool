@@ -41,7 +41,7 @@ class ReviewService {
       'value': value
     }
     return api
-      .post('/review/generic_metadata', payload, { headers: authHeader() })
+      .post('/review/generic_metadata', payload, { headers: authHeader(), timeout: 5000 })
       .then(response => {
         return response.data
       })
@@ -56,7 +56,7 @@ class ReviewService {
       'value': value
     }
     return api
-      .post('/review/publication_dataset_alias', payload, { headers: authHeader() })
+      .post('/review/publication_dataset_alias', payload, { headers: authHeader(), timeout: 5000 })
       .then(response => {
         return response.data
       })

@@ -7,7 +7,7 @@ class Review {
     var regEx = new RegExp(dataset_alias, "ig");
     this.id = id
     this.text = text
-    this.textAsHtml = text.replace(regEx, `<b>${dataset_alias}</b>`)
+    this.textAsHtml = text?.replace(regEx, `<b>${dataset_alias}</b>`)
     this.dataset_alias = dataset_alias
     this.dataset_parent_alias = dataset_parent_alias
     this.dataset_alias_url = dataset_alias_url
@@ -17,6 +17,9 @@ class Review {
     this.publication_title = publication_title
     this.publication_doi = publication_doi
     this.publication_year = publication_year
+    if (publication_year) {
+      this.publication_title = `${this.publication_title} (${this.publication_year})`
+    }
     this.dataset_mention_answered = dataset_mention_answered
     this.dataset_mention_parent_answered = dataset_mention_parent_answered
     //

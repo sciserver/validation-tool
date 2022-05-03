@@ -70,7 +70,7 @@ export class UsersService {
       .input('Email', VarChar, email)
       .input('Password', VarChar, password)
       .query(`SELECT source_id, source_type, organization_name, first_name, last_name, email
-        FROM richcontext_dev_redesign.dbo.metadata_source WHERE email = @Email
+        FROM metadata_source WHERE email = @Email
         AND password = HASHBYTES('SHA2_256', @Password)`);
     if (result.recordset && result.recordset.length > 0) {
       user = result.recordset[0] as User;

@@ -5,6 +5,7 @@ import {
   ReviewItem,
   ValidationGenericMetadataDto,
   ValidationTableItemDto,
+  ReviewReportItem,
 } from './review.interface';
 
 @Injectable()
@@ -152,12 +153,10 @@ export class ReviewService {
       .request()
       .input('SourceID', BigInt, source_id)
       .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
-      .input('Value', BigInt, validation.value)
-      .query(`INSERT INTO richcontext_dev_redesign.dbo.validation
-      (validation_id, entity_id, source_id, entity_type, value, validation_type)
-      SELECT 
-      MAX( validation_id ) + 1, @EntityID, @SourceID, 'generic_metadata', @Value, 'text_snippet_dataset_alias' 
-      FROM richcontext_dev_redesign.dbo.validation;`);
+      .input('Value', BigInt, validation.value).query(`INSERT INTO validation
+      (entity_id, source_id, entity_type, value, validation_type)
+      VALUES 
+      ( @EntityID, @SourceID, 'generic_metadata', @Value, 'text_snippet_dataset_alias' );`);
     return result.rowsAffected;
   }
 
@@ -205,12 +204,10 @@ export class ReviewService {
       .request()
       .input('SourceID', BigInt, source_id)
       .input('EntityID', BigInt, validation.dataset_mention_generic_metadata_id)
-      .input('Value', BigInt, validation.value)
-      .query(`INSERT INTO richcontext_dev_redesign.dbo.validation
-      (validation_id, entity_id, source_id, entity_type, value, validation_type)
-      SELECT 
-      MAX( validation_id ) + 1, @EntityID, @SourceID, 'generic_metadata', @Value, 'dataset_alias_official_name' 
-      FROM richcontext_dev_redesign.dbo.validation;`);
+      .input('Value', BigInt, validation.value).query(`INSERT INTO validation
+      ( entity_id, source_id, entity_type, value, validation_type)
+      VALUES 
+      ( @EntityID, @SourceID, 'generic_metadata', @Value, 'dataset_alias_official_name' );`);
     return result.rowsAffected;
   }
 
@@ -264,7 +261,7 @@ export class ReviewService {
       .input('EntityType', VarChar, entity_type)
       .input('ValidationType', VarChar, validation_type).query(`SELECT 
       validation_id, entity_id, source_id, entity_type, value
-      FROM richcontext_dev_redesign.dbo.validation v
+      FROM validation v
       WHERE 
           v.source_id = @SourceID
           and v.entity_id = @EntityID
@@ -274,5 +271,103 @@ export class ReviewService {
       item = result.recordset[0];
     }
     return item;
+  }
+
+  async deleteAssignments(source_id: number) {
+    const pool = await this.databaseService.getConnection();
+    const result = await pool.request().input('SourceID', BigInt, source_id)
+      .query(`DELETE FROM generic_metadata WHERE 
+        metadata_name = 'text_snippet_to_review' and entity_id = @SourceID`);
+    return result.rowsAffected;
+  }
+
+  async getReviewReport() {
+    let items: ReviewReportItem[] = [];
+    const pool = await this.databaseService.getConnection();
+    const result = await pool.request().query(`	select 
+    ms.source_id  as user_metadata_source_id, ms.email, ms.organization_name,
+sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_items,
+   sum(case when gm.generic_metadata_id is not null and (v_alias.value is null or v_alias_parent.value is null) then 1 else 0 end) as not_answered
+ from 
+   metadata_source ms
+ left join generic_metadata gm on ms.source_id = gm.entity_id and gm.metadata_name = 'text_snippet_to_review'-- added to see emails
+ left join 
+   generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id --removed double casting  
+ left join 
+   validation v_alias 
+   on gm2.generic_metadata_id = v_alias.entity_id 
+   and v_alias.entity_type = 'generic_metadata'
+   and v_alias.validation_type = 'text_snippet_dataset_alias'
+ left join 
+   validation v_alias_parent 
+   on gm2.generic_metadata_id = v_alias_parent.entity_id 
+   and v_alias_parent.entity_type = 'generic_metadata'
+   and v_alias_parent.validation_type = 'dataset_alias_official_name'
+ where 
+   ms.source_type = 'reviewer'
+ GROUP BY ms.source_id ,  ms.email, ms.organization_name`);
+    if (result.recordset && result.recordset.length > 0) {
+      items = result.recordset as ReviewReportItem[];
+    }
+    return items;
+  }
+
+  async assignitems(source_id: number, organization_name: string) {
+    const pool = await this.databaseService.getConnection();
+    const result = await pool
+      .request()
+      .input('SourceID', BigInt, source_id)
+      .input('OrganizationName', VarChar, organization_name)
+      .query(`INSERT INTO generic_metadata
+      (source_id, entity_id, entity_type, metadata_name, metadata, last_updated_date)
+      SELECT TOP 50
+        1,
+        @SourceID, 
+        'metadata_source',
+        'text_snippet_to_review',
+        gm.generic_metadata_id,
+        getdate()
+      FROM
+        generic_metadata gm
+      left join
+        publication_dataset_alias pda on pda.publication_dataset_alias_id = gm.entity_id
+      LEFT JOIN
+        dataset_alias da on pda.alias_id = da.alias_id
+      LEFT JOIN 
+        generic_metadata gm2 on da.parent_alias_id = gm2.entity_id  and gm2.metadata_name = 'dataset_validation_group'
+      left JOIN
+        generic_metadata gm3 on gm3.metadata_name = 'text_snippet_to_review' and cast(gm3.metadata as INT)  = gm.generic_metadata_id
+      left join 
+            validation v_alias 
+            on gm.generic_metadata_id = v_alias.entity_id 
+            and v_alias.entity_type = 'generic_metadata'
+            and v_alias.validation_type = 'text_snippet_dataset_alias'
+      left join 
+            validation v_alias_parent 
+            on gm.generic_metadata_id = v_alias_parent.entity_id 
+            and v_alias_parent.entity_type = 'generic_metadata'
+            and v_alias_parent.validation_type = 'dataset_alias_official_name'
+      WHERE
+        gm.metadata_name = 'text_snippet'
+        and gm2.metadata = @OrganizationName 
+        and (v_alias.value is null or v_alias_parent.value is null)
+        and gm3.generic_metadata_id is null`);
+    return result.rowsAffected;
+  }
+
+  async checkAndAssignNewItems() {
+    const report = await this.getReviewReport();
+    for (const reportItem of report) {
+      if (
+        reportItem.not_answered === 0 &&
+        ![6, 7].includes(reportItem.user_metadata_source_id)
+      ) {
+        await this.deleteAssignments(reportItem.user_metadata_source_id);
+        await this.assignitems(
+          reportItem.user_metadata_source_id,
+          reportItem.organization_name,
+        );
+      }
+    }
   }
 }

@@ -1,0 +1,37 @@
+@startuml Architeture_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+SHOW_PERSON_OUTLINE()
+
+Person(personAlias, "Validator", "Responsible for validating the datasets references found in the publications")
+' Container(containerAlias, "Label", "Technology", "Optional Description")
+' System(systemAlias, "Label", "Optional Description")
+
+System_Boundary(c1, "Validation Tool Application") {
+    Container(webapp, "Web View Application", "Javascript, Vue.JS", "Frontend Application. (https://github.com/Coleridge-Initiative/validation-tool/tree/main/validation-tool-frontend)")
+    Container(backend, "Backend API", "Javascript, NestJS", "Backend Application. (https://github.com/Coleridge-Initiative/validation-tool/tree/main/validation-tool-backend)")
+    ' Container(message_bus, "Message Bus", "RabbitMQ", "Transport for business events")
+    ' Container(reporting_service, "Reporting Service", "Ruby", "Creates normalised data for reporting purposes", $tags = "micro service")
+    ' Container(audit_service, "Audit Service", "C#/.NET", "Provides organisation-wide auditing facilities", $tags = "micro service")
+    ContainerDb(database, "Database", "MS-SQL", "Validation tool metadata (Data Model)")
+    ' ContainerDb(reporting_db, "Reporting Database", "MySQL", "Stores a normalized version of all business data for ad hoc reporting purposes", $tags = "storage")
+    ' Container(audit_store, "Audit Store", "Event Store", "Stores information about events that have happened", $tags = "storage")
+}
+
+System_Boundary(infra, "Infrastructure") {
+    Container(server, "Scorecard Server", "EC2 instance", "AWS Public Account - 846732787754 (scorecard.adrf.net)")
+    Container(service, "Linux Services", "", "Linux Services running the Frontend and Backend applications")
+    Container(apache, "Apache", "Reverse Proxy", "Exposes the Frontend and the Backend applications")
+    ' Container(reporting_service, "Reporting Service", "Ruby", "Creates normalised data for reporting purposes", $tags = "micro service")
+    ' Container(audit_service, "Audit Service", "C#/.NET", "Provides organisation-wide auditing facilities", $tags = "micro service")
+    ' ContainerDb(database, "Database", "MS-SQL", "Validation tool metadata (Data Model)")
+    ' ContainerDb(reporting_db, "Reporting Database", "MySQL", "Stores a normalized version of all business data for ad hoc reporting purposes", $tags = "storage")
+    ' Container(audit_store, "Audit Store", "Event Store", "Stores information about events that have happened", $tags = "storage")
+}
+
+Rel(personAlias, webapp, "https://richcontext.coleridgeinitiative.org/validation/", "Browser")
+Rel(webapp, backend, "API")
+Rel(backend, database, "Datastore")
+Rel(c1, infra, "Hosted")
+
+@enduml

@@ -32,3 +32,11 @@ export interface ValidationTableItemDto {
   entity_type: string;
   value: number;
 }
+
+export interface ReviewReportItem {
+  user_metadata_source_id: number;
+  email: string;
+  organization_name: string;
+  assigned_items: number;
+  not_answered: number;
+}
