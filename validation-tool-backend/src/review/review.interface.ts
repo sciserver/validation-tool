@@ -35,6 +35,7 @@ export interface ValidationTableItemDto {
 
 export interface ReviewReportItem {
   user_metadata_source_id: number;
+  organization_source_id: number;
   email: string;
   organization_name: string;
   assigned_items: number;

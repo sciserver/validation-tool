@@ -285,11 +285,12 @@ export class ReviewService {
     let items: ReviewReportItem[] = [];
     const pool = await this.databaseService.getConnection();
     const result = await pool.request().query(`	select 
-    ms.source_id  as user_metadata_source_id, ms.email, ms.organization_name,
+    ms.source_id  as user_metadata_source_id, ms2.source_id as organization_source_id, ms.email, ms.organization_name,
 sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_items,
    sum(case when gm.generic_metadata_id is not null and (v_alias.value is null or v_alias_parent.value is null) then 1 else 0 end) as not_answered
  from 
    metadata_source ms
+ join metadata_source ms2 on (ms2.organization_name = ms.organization_name and ms2.source_type = 'org')
  left join generic_metadata gm on ms.source_id = gm.entity_id and gm.metadata_name = 'text_snippet_to_review'-- added to see emails
  left join 
    generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id --removed double casting  
@@ -312,16 +313,17 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     return items;
   }
 
-  async assignitems(source_id: number, organization_name: string) {
+  async assignitems(source_id: number, organization_source_id: number, organization_name: string) {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
       .input('SourceID', BigInt, source_id)
+      .input('OrganizationSourceID', BigInt, organization_source_id)
       .input('OrganizationName', VarChar, organization_name)
       .query(`INSERT INTO generic_metadata
       (source_id, entity_id, entity_type, metadata_name, metadata, last_updated_date)
       SELECT TOP 50
-        1,
+        @OrganizationSourceID,
         @SourceID, 
         'metadata_source',
         'text_snippet_to_review',
@@ -359,12 +361,12 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     const report = await this.getReviewReport();
     for (const reportItem of report) {
       if (
-        reportItem.not_answered === 0 &&
-        ![6, 7].includes(reportItem.user_metadata_source_id)
+        reportItem.not_answered === 0 
       ) {
         await this.deleteAssignments(reportItem.user_metadata_source_id);
         await this.assignitems(
           reportItem.user_metadata_source_id,
+          reportItem.organization_source_id,
           reportItem.organization_name,
         );
       }
