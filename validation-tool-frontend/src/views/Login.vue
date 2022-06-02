@@ -11,7 +11,7 @@
               You will be given up to 100 snippets to review initially, and then additional snippets in batches of 100.  
             </p>
             <p align="center">
-If you have any questions, please email us at <a href="mailto:support@coleridgeinitiative.org">support@coleridgeinitiative.org</a>
+If you have any questions, please email us at <a href="mailto:sciserver-helpdesk@jhu.edu">sciserver-helpdesk@jhu.edu</a>
             </p>
             <p align="center">
 Login here to start the review process – and thank you so much for contributing to the public good.
