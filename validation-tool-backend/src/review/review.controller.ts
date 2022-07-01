@@ -29,8 +29,8 @@ export class ReviewController {
       page_number = 0;
     }
     const user: User = req.user;
-    return await this.reviewService.getReviewItens(
-      user.source_id,
+    return await this.reviewService.getReviewItems(
+      user.id,
       page_size,
       page_number,
     );
@@ -40,7 +40,7 @@ export class ReviewController {
   @UseGuards(JwtAuthGuard)
   async getReviewItensCount(@Req() req) {
     const user: User = req.user;
-    const result = await this.reviewService.getReviewItensCount(user.source_id);
+    const result = await this.reviewService.getReviewItensCount(user.id);
     return result;
   }
 
@@ -51,7 +51,7 @@ export class ReviewController {
     @Body() body: ValidationGenericMetadataDto,
   ) {
     const user: User = req.user;
-    await this.reviewService.reviewDatasetMentionAlias(user.source_id, body);
+    await this.reviewService.reviewDatasetMentionAlias(user.id, body);
     return true;
   }
 
@@ -63,7 +63,7 @@ export class ReviewController {
   ) {
     const user: User = req.user;
     await this.reviewService.reviewDatasetMentionParentAlias(
-      user.source_id,
+      user.id,
       body,
     );
     return true;
