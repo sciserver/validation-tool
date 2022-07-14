@@ -1,13 +1,33 @@
+function highlightCenterWord(text, word){
+  let textLow = text.toLowerCase()
+  let wordLow = word.toLowerCase()
+  let indexes = []
+  let index = textLow.indexOf(wordLow);
+  while(index !== -1) {
+    indexes.push(index)
+    index = textLow.indexOf(wordLow, index + 1);
+  }
+  if(indexes.length == 0){
+    return text
+  }
+  var centerIndex = parseInt(text.length/2)
+  var closestCenterWordIndex = indexes.reduce(function(previousIndex, currentIndex) {
+    return (Math.abs(currentIndex - centerIndex) < Math.abs(previousIndex - centerIndex) ? currentIndex : previousIndex);
+  });
+  return text.slice(0, closestCenterWordIndex) + '<b style="background-color: khaki;">' + word + '</b>' + text.slice(closestCenterWordIndex + word.length);
+}
+
+
+
 class Review {
 
   constructor(id, text, alias_candidate, dataset_parent_alias,
     publication_dataset_alias_id, publication_id, publication_title, publication_doi,
     dataset_alias_url, dataset_parent_alias_url, dataset_mention_answered, dataset_mention_parent_answered, publication_year, dataset_correct, alias_correct, dataset_alias2) {
 
-    var regEx = new RegExp(alias_candidate, "ig");
     this.id = id
     this.text = text
-    this.textAsHtml = text?.replace(regEx, `<b style="background-color: khaki;">${alias_candidate}</b>`)
+    this.textAsHtml = highlightCenterWord(text, alias_candidate)
     this.dataset_alias = alias_candidate != null ? alias_candidate : undefined
     this.dataset_parent_alias = dataset_parent_alias != null ? dataset_parent_alias : undefined
     this.dataset_alias_url = dataset_alias_url
@@ -64,11 +84,13 @@ class Review {
   }
 
   datasetAliasButtons() {
-    return true //!this.dataset_alias_loading && !this.dataset_alias_check
+    //return !this.dataset_alias_loading && !this.dataset_alias_check
+    return true
   }
 
   datasetParentAliasButtons() {
-    return true //!this.dataset_parent_alias_loading && !this.dataset_parent_alias_check
+    //return !this.dataset_parent_alias_loading && !this.dataset_parent_alias_check
+    return true 
   }
 
 }

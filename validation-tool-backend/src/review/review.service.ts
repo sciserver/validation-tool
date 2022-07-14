@@ -34,21 +34,19 @@ export class ReviewService {
       pu.doi as publication_doi,
       pda.mention_candidate as alias_candidate,
       da.url as dataset_mention_alias_url,
-      CASE WHEN sv.dataset_correct is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_answered,
-      CASE WHEN sv.alias_correct is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT)END as dataset_mention_parent_answered,
+      CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_answered,
+      CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT)END as dataset_mention_parent_answered,
       CASE WHEN da_parent.alias is null THEN da.alias ELSE da_parent.alias END AS dataset_mention_parent_alias,
-      --null AS dataset_mention_parent_alias,      
       CASE WHEN da_parent.alias is null THEN da.url ELSE da_parent.url END as dataset_mention_parent_alias_url,
-      sv.dataset_correct as dataset_correct,
-      sv.alias_correct as alias_correct,
+      sv.is_dataset_reference as dataset_correct,
+      sv.agency_dataset_identified as alias_correct,
       da.alias as dataset_alias
-      --null as dataset_alias
       FROM susd_user su 
       JOIN reviewer re ON re.susd_user_id=su.id
       JOIN snippet_validation sv ON sv.reviewer_id = re.id  and sv.run_id=re.run_id
       JOIN publication_dataset_alias pda ON pda.id = sv.publication_dataset_alias_id  AND pda.run_id=sv.run_id
       JOIN publication pu ON pu.id = pda.publication_id AND pu.run_id=pda.run_id
-      LEFT JOIN dataset_alias da ON da.id = pda.alias_id AND da.run_id = sv.run_id
+      LEFT JOIN dataset_alias da ON da.id = pda.dataset_alias_id AND da.run_id = sv.run_id
       LEFT JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
       JOIN agency_run ar ON ar.id=re.run_id
       WHERE su.id = @EntityID
@@ -67,14 +65,14 @@ export class ReviewService {
     const result = await pool.request().input('EntityID', BigInt, source_id)
       .query(`SELECT 
       COUNT(*) as items_number,
-      SUM (CASE WHEN sv.alias_correct is not null and sv.dataset_correct is not null THEN 1 ELSE 0 END) as answered,
+      SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
       su.id as entity_id
       from susd_user su 
       join reviewer re on re.susd_user_id=su.id
       join snippet_validation sv on sv.reviewer_id = re.id  and sv.run_id=re.run_id
       join publication_dataset_alias pda on pda.id = sv.publication_dataset_alias_id  and pda.run_id=sv.run_id
       join publication pu on pu.id = pda.publication_id and pu.run_id=pda.run_id
-      join dataset_alias da on da.id = pda.alias_id and da.run_id = sv.run_id
+      join dataset_alias da on da.id = pda.dataset_alias_id and da.run_id = sv.run_id
       left join dataset_alias da_parent on da.parent_alias_id = da_parent.alias_id  and da_parent.run_id = sv.run_id
       join agency_run ar on ar.id=re.run_id
       where su.id = @EntityID
@@ -104,7 +102,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set dataset_correct = @Value 
+      .query(`update snippet_validation set is_dataset_reference = @Value 
       where id = @ID`);
     return result.rowsAffected;
   }
@@ -126,7 +124,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set alias_correct = @Value
+      .query(`update snippet_validation set agency_dataset_identified = @Value
       where id = @ID`);
     return result.rowsAffected;
   }
