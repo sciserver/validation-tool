@@ -21,6 +21,7 @@ export class ReviewController {
     @Req() req,
     @Query('page_size') page_size,
     @Query('page_number') page_number,
+    @Query('do_show_reviewed_items') do_show_reviewed_items,
   ) {
     if (!page_size) {
       page_size = 10;
@@ -33,14 +34,18 @@ export class ReviewController {
       user.id,
       page_size,
       page_number,
+      do_show_reviewed_items
     );
   }
 
   @Get('/count')
   @UseGuards(JwtAuthGuard)
-  async getReviewItensCount(@Req() req) {
+  async getReviewItensCount(
+    @Req() req,
+    @Query('do_show_reviewed_items') do_show_reviewed_items
+    ) {
     const user: User = req.user;
-    const result = await this.reviewService.getReviewItensCount(user.id);
+    const result = await this.reviewService.getReviewItensCount(user.id, do_show_reviewed_items);
     return result;
   }
 
