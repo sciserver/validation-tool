@@ -13,9 +13,15 @@
           <strong>{{ reviewRatio }}%</strong>
         </v-progress-linear>
       </v-col>
+      <v-col cols="10" offset="1">
+        <input type="checkbox" id="hide_reviewd_items_checkbox" @change='fetchReviews()' v-model="hideReviewedItems">
+        Hide reviewed items
+      </v-col>
+
+
       <v-col cols="10" offset="1" v-show="noPendingReviews">
         <v-alert class="all-reviewed" type="success">
-          Thank you so very much for your valuable contribution! We will give you another batch to review shortly
+          Thank you so very much for your valuable contribution!
         </v-alert>
       </v-col>
     </v-row>
@@ -138,13 +144,15 @@ export default {
     pageSize: 10,
     currentPage: 1, // Vuetify component starts at 1, not 0
     loadingReviews: false,
+    hideReviewedItems: false,
+    numSnippets: 0,
   }),
   created() {
     // nothing
   },
   mounted() {
     this.fetchReviewsCount()
-    this.fetchReviews()
+    this.fetchReviews(!this.hideReviewedItems)
   },
   computed: {
     reviewRatio() {
@@ -154,24 +162,33 @@ export default {
       return this.totalPending === this.totalReviewed
     },
     totalPages() {
-      return Math.ceil(this.totalPending / this.pageSize)
+      //return Math.ceil(this.totalPending / this.pageSize)
+      console.log(Math.ceil(this.numSnippets / this.pageSize))
+      return Math.ceil(this.numSnippets / this.pageSize)
     }
   },
   methods: {
     fetchReviewsCount() {
-      return reviewService.getPendingReviewsCount()
+      return reviewService.getPendingReviewsCount(!this.hideReviewedItems)
+      //return reviewService.getPendingReviewsCount(true)
         .then((data) => {
           this.totalPending = data.total
           this.totalReviewed = data.answered
           this.totalReviewsAlreadyRetrieved = true
+          this.numSnippets = this.hideReviewedItems ? (data.total - data.answered) : data.total 
         })
     },
     fetchReviews() {
       //window.scroll({ top: 0, left: 0, behavior: 'smooth' })
       this.loadingReviews = true
-      return reviewService.getPendingReviews(this.pageSize, this.currentPage-1)
+      return reviewService.getPendingReviews(this.pageSize, this.currentPage-1, !this.hideReviewedItems)
+      //return reviewService.getPendingReviews(this.pageSize, this.currentPage-1, true)
         .then((data) => {
-          this.pendingReviews = data.map(r => Review.fromData(r))
+          data = data.map(r => Review.fromData(r))
+          if(this.hideReviewedItems){
+            data = data.filter(r => r.isFullyReviewed == false)
+          }
+          this.pendingReviews = data
           this.loadingReviews = false
         })
     },

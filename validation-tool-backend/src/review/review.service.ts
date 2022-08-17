@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BigInt, VarChar } from 'mssql';
+import { BigInt, Int, VarChar } from 'mssql';
 import { DatabaseService } from 'src/database/database.service';
 import {
   ReviewItem,
@@ -16,6 +16,7 @@ export class ReviewService {
     source_id: number,
     page_size = 10,
     page_number = 0,
+    do_show_reviewed_items = 1,
   ): Promise<ReviewItem[]> {
     let items: ReviewItem[] = [];
     const pool = await this.databaseService.getConnection();
@@ -23,7 +24,8 @@ export class ReviewService {
       .request()
       .input('EntityID', BigInt, source_id) // EntityID or source_id is the ID of the user.
       .input('Fetch', BigInt, page_size)
-      .input('Offset', BigInt, page_number * page_size).query(`SELECT 
+      .input('Offset', BigInt, page_number * page_size)
+      .input('DoShowWReviewedItems', Int, do_show_reviewed_items).query(`SELECT 
       su.id as user_metadata_source_id,
       sv.id as dataset_mention_generic_metadata_id,
       pda.snippet as dataset_mention,
@@ -35,7 +37,7 @@ export class ReviewService {
       pda.mention_candidate as alias_candidate,
       da.url as dataset_mention_alias_url,
       CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_answered,
-      CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT)END as dataset_mention_parent_answered,
+      CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_parent_answered,
       CASE WHEN da_parent.alias is null THEN da.alias ELSE da_parent.alias END AS dataset_mention_parent_alias,
       CASE WHEN da_parent.alias is null THEN da.url ELSE da_parent.url END as dataset_mention_parent_alias_url,
       sv.is_dataset_reference as dataset_correct,
@@ -50,6 +52,7 @@ export class ReviewService {
       LEFT JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
       JOIN agency_run ar ON ar.id=re.run_id
       WHERE su.id = @EntityID
+      and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
       ORDER BY pda.id
       OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
     if (result.recordset && result.recordset.length > 0) {
@@ -60,9 +63,10 @@ export class ReviewService {
 
   async getReviewItensCount(
     source_id: number,
+    do_show_reviewed_items = 1
   ): Promise<{ total: number; answered: number }> {
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().input('EntityID', BigInt, source_id)
+    const result = await pool.request().input('EntityID', BigInt, source_id).input('DoShowWReviewedItems', Int, do_show_reviewed_items)
       .query(`SELECT 
       COUNT(*) as items_number,
       SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
@@ -76,6 +80,7 @@ export class ReviewService {
       left join dataset_alias da_parent on da.parent_alias_id = da_parent.alias_id  and da_parent.run_id = sv.run_id
       join agency_run ar on ar.id=re.run_id
       where su.id = @EntityID
+      and (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END)  <= @DoShowWReviewedItems
       group by su.id`);
     const count_result = {
       total: 0,

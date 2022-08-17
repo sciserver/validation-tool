@@ -40,7 +40,7 @@ class Review {
     if (publication_year) {
       this.publication_title = `${this.publication_title} (${this.publication_year})`
     }
-    this.dataset_mention_answered = dataset_mention_answered
+    this.dataset_mention_answered = dataset_mention_parent_answered
     this.dataset_mention_parent_answered = dataset_mention_parent_answered
     this.dataset_correct = dataset_correct != null ? parseInt(dataset_correct) : undefined
     this.alias_correct = alias_correct != null ? parseInt(alias_correct) : undefined
@@ -58,6 +58,7 @@ class Review {
     this.dataset_parent_alias_check = dataset_mention_parent_answered != null && dataset_mention_parent_answered != undefined ? true : undefined 
     this.overlay = this.alias_correct != undefined && this.dataset_correct != undefined
     this.beingEdited = false
+    this.isFullyReviewed = dataset_mention_answered && dataset_mention_parent_answered
   }
 
   static fromData(data) {

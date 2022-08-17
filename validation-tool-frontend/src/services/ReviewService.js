@@ -6,11 +6,12 @@ class ReviewService {
     // nothing to do
   }
 
-  getPendingReviews(pageSize, nextPage) {
+  getPendingReviews(pageSize, nextPage, doShowReviewedItems) {
     let config = {
       params: {
         'page_size': pageSize,
-        'page_number': nextPage
+        'page_number': nextPage,
+        'do_show_reviewed_items':  1*doShowReviewedItems
       },
       headers: authHeader(),
     }
@@ -24,9 +25,9 @@ class ReviewService {
       })
   }
 
-  getPendingReviewsCount() {
+  getPendingReviewsCount(doShowReviewedItems) {
     return api
-      .get('/review/count', { headers: authHeader() })
+      .get('/review/count', { headers: authHeader(), params: {'do_show_reviewed_items':  1*doShowReviewedItems} })
       .then(response => {
         return response.data
       })
