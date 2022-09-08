@@ -163,19 +163,18 @@ export default {
     },
     totalPages() {
       //return Math.ceil(this.totalPending / this.pageSize)
-      console.log(Math.ceil(this.numSnippets / this.pageSize))
       return Math.ceil(this.numSnippets / this.pageSize)
     }
   },
   methods: {
     fetchReviewsCount() {
-      return reviewService.getPendingReviewsCount(!this.hideReviewedItems)
+      return reviewService.getPendingReviewsCount(true)
       //return reviewService.getPendingReviewsCount(true)
         .then((data) => {
           this.totalPending = data.total
           this.totalReviewed = data.answered
           this.totalReviewsAlreadyRetrieved = true
-          this.numSnippets = this.hideReviewedItems ? (data.total - data.answered) : data.total 
+          this.numSnippets = data.total 
         })
     },
     fetchReviews() {
