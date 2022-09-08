@@ -14,7 +14,7 @@
         </v-progress-linear>
       </v-col>
       <v-col cols="10" offset="1">
-        <input type="checkbox" id="hide_reviewd_items_checkbox" @change='fetchReviews()' v-model="hideReviewedItems">
+        <input type="checkbox" id="hide_reviewd_items_checkbox" @change='fetchReviews() && fetchReviewsCount()' v-model="hideReviewedItems">
         Hide reviewed items
       </v-col>
 

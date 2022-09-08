@@ -13,6 +13,7 @@ export class DatabaseService {
         user: this.configService.get('DB_USER'),
         password: this.configService.get('DB_PASSWORD'),
         server: this.configService.get('DB_SERVER'),
+        port: parseInt(this.configService.get('DB_PORT')),
         database: this.configService.get('DB_DATABASE'),
         options: {
           encrypt: false,
