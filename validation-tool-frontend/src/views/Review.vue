@@ -14,7 +14,7 @@
         </v-progress-linear>
       </v-col>
       <v-col cols="10" offset="1">
-        <input type="checkbox" id="hide_reviewd_items_checkbox" @change='fetchReviews() && fetchReviewsCount()' v-model="hideReviewedItems">
+        <input type="checkbox" id="hide_reviewd_items_checkbox" @change='updatePageSize()' v-model="hideReviewedItems">
         Hide reviewed items
       </v-col>
 
@@ -163,13 +163,16 @@ export default {
     },
     totalPages() {
       //return Math.ceil(this.totalPending / this.pageSize)
+      if (this.hideReviewedItems) {
+        return Math.ceil((this.numSnippets - this.totalReviewed)/ this.pageSize)
+      }
       console.log(Math.ceil(this.numSnippets / this.pageSize))
       return Math.ceil(this.numSnippets / this.pageSize)
     }
   },
   methods: {
     fetchReviewsCount() {
-      return reviewService.getPendingReviewsCount(!this.hideReviewedItems)
+      return reviewService.getPendingReviewsCount(true)
       //return reviewService.getPendingReviewsCount(true)
         .then((data) => {
           this.totalPending = data.total
@@ -294,6 +297,10 @@ export default {
         && review.dataset_mention_parent_answered
         && !(review.beingEdited)) {
         this.totalReviewed++ // increment counter for completed reviews
+        if (this.hideReviewedItems) {
+          // this.pendingReviews = this.pendingReviews.filter(r => r.id != review.id)
+          this.loadPage()
+        }
       }
       // review.answered = true
       review.overlay = true
