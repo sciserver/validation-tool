@@ -178,7 +178,7 @@ export default {
           this.totalPending = data.total
           this.totalReviewed = data.answered
           this.totalReviewsAlreadyRetrieved = true
-          this.numSnippets = this.hideReviewedItems ? (data.total - data.answered) : data.total 
+          this.numSnippets = data.total 
         })
     },
     fetchReviews() {

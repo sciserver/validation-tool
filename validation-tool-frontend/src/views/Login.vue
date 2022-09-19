@@ -2,20 +2,37 @@
   <v-container>
     <v-layout align-center justify-center column>
       <v-flex justify-center>
-            <p align="center">Welcome to the  Validation Tool project. Thank you for participating in this game-changing effort to show the value of public data using automated tools
+            <h2 align="left">Welcome to the  Validation Tool for the Democratizing Data project.</h2>
+            <p align="left">
+               Thank you for participating in this important effort to show the value of government data using automated tools.
+            </p>
+            <h3 align="left">Background</h3>
+            <p align="left">
+              Title II of the Evidence Act (Section 202(c)) requires agencies to "facilitate collaboration with non-Government entities (including businesses), researchers, 
+              and the public for the purpose of understanding how data users value and use government data; engage the public in using public data assets of the agency 
+              and encourage collaboration by publishing on the website of the agency, on a regular basis (not less than annually), 
+              information on the usage of such assets by non-Government users; and assist the public in expanding the use of public data assets.            
+
+              The Democratizing Data project has partnered with a number of agencies to develop machine learning ML models to automate the search and discovery of datasets 
+              in scientific publications (more information is available here and here). You are being asked to validate the results of the ML models for one of the agencies participating in the effort.              
+            </p>
+            <h3 align="left">Details</h3>
+            <p align="left">
+              The validation tool provides you with a number of text snippets containing a candidate phrase identified by the model. 
+              For each candidate phrase, you are asked to answer two questions:
+              <ul>
+                <li>
+                  The first is to confirm whether the machine learning algorithm was correct in considering the phrase as a reference to a dataset in general.
+                </li>
+                <li>
+                  The second is to confirm whether the dataset candidate was correctly matched to one of those dataset names provided by the agencies.
+                </li>
+              </ul>
+              You will be given a set of snippets to review initially, and additional snippets can be assigned upon request.
             </p>
             <p align="center">
-              You will be reviewing text snippets that have identified a reference to a dataset in a publication. You have two simple tasks for each snippet. The first is to confirm whether the machine learning algorithm was correct in finding the dataset reference.  The second is to confirm whether the dataset reference is to the dataset identified by the relevant agency.
+              Login here to start the review process – and thank you so much for contributing to the public good.
             </p>
-            <p align="center">
-              You will be given up to 100 snippets to review initially, and then additional snippets in batches of 100.  
-            </p>
-            <p align="center">
-If you have any questions, please email us at <a href="mailto:sciserver-helpdesk@jhu.edu">sciserver-helpdesk@jhu.edu</a>
-            </p>
-            <p align="center">
-Login here to start the review process – and thank you so much for contributing to the public good.
-              </p>
       </v-flex>
       <v-flex style="width:  400px;">
         <v-form ref="loginForm" @submit.prevent="authenticate">
@@ -55,6 +72,13 @@ Login here to start the review process – and thank you so much for contributin
             </v-card-actions>
           </v-card>
         </v-form>
+            <br>
+            <br>
+            <p align="left">
+              Email <a href="mailto:sciserver-helpdesk@jhu.edu">sciserver-helpdesk@jhu.edu</a> for questions.
+            </p>
+
+
       </v-flex>
     </v-layout>
   </v-container>

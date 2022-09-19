@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-app-bar class="header" color="grey darken-4" dense>
-      <v-app-bar-title class="logo">ShowUStheData Validation Tool</v-app-bar-title>
+      <v-app-bar-title class="logo">Democratizing Data Validation Tool</v-app-bar-title>
       <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/" v-show="false">Home</v-btn>
       <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/about" v-show="false">About</v-btn>
       <!-- <v-btn class="ma-1 pa-1" text color="blue-grey lighten-4" to="/review" v-if="isLoggedIn">Review</v-btn> -->
