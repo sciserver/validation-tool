@@ -16,68 +16,78 @@
               The Democratizing Data project has partnered with a number of agencies to develop machine learning ML models to automate the search and discovery of datasets 
               in scientific publications (more information is available here and here). You are being asked to validate the results of the ML models for one of the agencies participating in the effort.              
             </p>
-            <h3 align="left">Details</h3>
-            <p align="left">
-              The validation tool provides you with a number of text snippets containing a candidate phrase identified by the model. 
-              For each candidate phrase, you are asked to answer two questions:
-              <ul>
-                <li>
-                  The first is to confirm whether the machine learning algorithm was correct in considering the phrase as a reference to a dataset in general.
-                </li>
-                <li>
-                  The second is to confirm whether the dataset candidate was correctly matched to one of those dataset names provided by the agencies.
-                </li>
-              </ul>
-              You will be given a set of snippets to review initially, and additional snippets can be assigned upon request.
-            </p>
-            <p align="center">
-              Login here to start the review process – and thank you so much for contributing to the public good.
-            </p>
-      </v-flex>
-      <v-flex style="width:  400px;">
-        <v-form ref="loginForm" @submit.prevent="authenticate">
-          
-          <v-card class="elevation-12">
-            <v-toolbar dark color="blue-grey darken-2">
-              <v-toolbar-title>Login</v-toolbar-title>
-            </v-toolbar>
-            <v-card-text>
-              <span style="color: red;" v-show="authError">Invalid Username or Password</span>
-              <!-- <v-form> -->
-                <v-text-field
-                  prepend-icon="mdi-account-circle"
-                  name="username"
-                  label="Username"
-                  type="text"
-                  v-model="username"
-                ></v-text-field>
-                <v-text-field
-                  id="password"
-                  prepend-icon="mdi-lock"
-                  name="password"
-                  label="Password"
-                  type="password"
-                  v-model="password"
-                ></v-text-field>
-              <!-- </v-form> -->
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn 
-                color="blue-grey darken-2"
-                dark 
-                :loading="loginInProgress"
-                type="submit"
-              >Login</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-form>
-            <br>
-            <br>
-            <p align="left">
-              Email <a href="mailto:sciserver-helpdesk@jhu.edu">sciserver-helpdesk@jhu.edu</a> for questions.
-            </p>
+            <v-row>
+              <v-col cols="6">
 
+                <h3 align="left">Details</h3>
+                <p align="left">
+                  The validation tool provides you with a number of text snippets containing a candidate phrase identified by the model. 
+                  For each candidate phrase, you are asked to answer two questions:
+                  <ul>
+                    <li>
+                      The first is to confirm whether the machine learning algorithm was correct in considering the phrase as a reference to a dataset in general.
+                    </li>
+                    <li>
+                      The second is to confirm whether the dataset candidate was correctly matched to one of those dataset names provided by the agencies.
+                    </li>
+                  </ul>
+                  You will be given a set of snippets to review initially, and additional snippets can be assigned upon request.
+                </p>
+
+              </v-col>
+              <v-col cols="6">
+
+                <v-flex style="width:  400px;">
+                  <v-form ref="loginForm" @submit.prevent="authenticate">
+                    
+                    <v-card class="elevation-12">
+                      <v-toolbar dark color="blue-grey darken-2">
+                        <v-toolbar-title>Login</v-toolbar-title>
+                      </v-toolbar>
+                      <v-card-text>
+                        <span style="color: red;" v-show="authError">Invalid Username or Password</span>
+                        <!-- <v-form> -->
+                          <v-text-field
+                            prepend-icon="mdi-account-circle"
+                            name="username"
+                            label="Username"
+                            type="text"
+                            v-model="username"
+                          ></v-text-field>
+                          <v-text-field
+                            id="password"
+                            prepend-icon="mdi-lock"
+                            name="password"
+                            label="Password"
+                            type="password"
+                            v-model="password"
+                          ></v-text-field>
+                        <!-- </v-form> -->
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn 
+                          color="blue-grey darken-2"
+                          dark 
+                          :loading="loginInProgress"
+                          type="submit"
+                        >Login</v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-form>
+                      <br>
+                      <br>
+                      <p align="left">
+                        Email <a href="mailto:sciserver-helpdesk@jhu.edu">sciserver-helpdesk@jhu.edu</a> for questions.
+                      </p>
+
+
+                </v-flex>
+
+
+
+              </v-col>
+            </v-row>
 
       </v-flex>
     </v-layout>
