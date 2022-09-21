@@ -22,4 +22,9 @@ export class AppController {
   async login(@Request() req) {
     return this.authService.login(req.user);
   }
+
+  @Get('/ping')
+  async getPingResponse(@Request() req) {
+    return 'Service is running.';
+  }
 }

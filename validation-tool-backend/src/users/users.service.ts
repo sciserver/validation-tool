@@ -27,7 +27,7 @@ export class UsersService {
    */
   private readonly users = [
     {
-      source_id: 3,
+      id: 3,
       source_type: 'user',
       last_name: 'tester',
       first_name: 'john',
@@ -69,8 +69,8 @@ export class UsersService {
       .request()
       .input('Email', VarChar, email)
       .input('Password', VarChar, password)
-      .query(`SELECT source_id, source_type, organization_name, first_name, last_name, email
-        FROM metadata_source WHERE email = @Email
+      .query(`SELECT id, first_name, last_name, email
+        FROM susd_user WHERE email = @Email
         AND password = HASHBYTES('SHA2_256', @Password)`);
     if (result.recordset && result.recordset.length > 0) {
       user = result.recordset[0] as User;

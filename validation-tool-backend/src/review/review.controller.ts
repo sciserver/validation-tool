@@ -21,6 +21,7 @@ export class ReviewController {
     @Req() req,
     @Query('page_size') page_size,
     @Query('page_number') page_number,
+    @Query('do_show_reviewed_items') do_show_reviewed_items,
   ) {
     if (!page_size) {
       page_size = 10;
@@ -29,18 +30,22 @@ export class ReviewController {
       page_number = 0;
     }
     const user: User = req.user;
-    return await this.reviewService.getReviewItens(
-      user.source_id,
+    return await this.reviewService.getReviewItems(
+      user.id,
       page_size,
       page_number,
+      do_show_reviewed_items
     );
   }
 
   @Get('/count')
   @UseGuards(JwtAuthGuard)
-  async getReviewItensCount(@Req() req) {
+  async getReviewItensCount(
+    @Req() req,
+    @Query('do_show_reviewed_items') do_show_reviewed_items
+    ) {
     const user: User = req.user;
-    const result = await this.reviewService.getReviewItensCount(user.source_id);
+    const result = await this.reviewService.getReviewItensCount(user.id, do_show_reviewed_items);
     return result;
   }
 
@@ -51,7 +56,7 @@ export class ReviewController {
     @Body() body: ValidationGenericMetadataDto,
   ) {
     const user: User = req.user;
-    await this.reviewService.reviewDatasetMentionAlias(user.source_id, body);
+    await this.reviewService.reviewDatasetMentionAlias(user.id, body);
     return true;
   }
 
@@ -63,7 +68,7 @@ export class ReviewController {
   ) {
     const user: User = req.user;
     await this.reviewService.reviewDatasetMentionParentAlias(
-      user.source_id,
+      user.id,
       body,
     );
     return true;
