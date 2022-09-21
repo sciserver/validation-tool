@@ -107,7 +107,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set is_dataset_reference = @Value 
+      .query(`update snippet_validation set is_dataset_reference = @Value, last_updated_date = GETDATE() 
       where id = @ID`);
     return result.rowsAffected;
   }
@@ -129,7 +129,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set agency_dataset_identified = @Value
+      .query(`update snippet_validation set agency_dataset_identified = @Value, last_updated_date = GETDATE() 
       where id = @ID`);
     return result.rowsAffected;
   }
