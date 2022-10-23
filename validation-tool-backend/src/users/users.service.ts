@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { VarChar } from 'mssql';
+import { VarChar, Int } from 'mssql';
 import { DatabaseService } from 'src/database/database.service';
 import { User } from './user.interface';
 
@@ -74,7 +74,18 @@ export class UsersService {
         AND password = HASHBYTES('SHA2_256', @Password)`);
     if (result.recordset && result.recordset.length > 0) {
       user = result.recordset[0] as User;
+      const roles = await pool.request()
+        .input('SUSD_USER_ID', Int, user.id)
+        .query('SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID');
+      if (roles.recordset && roles.recordset.length > 0) {
+        const privileges = roles.recordset;
+        privileges.forEach(element => {
+          element['roles'] = JSON.parse(element['roles'])
+        });
+        user['privileges'] = privileges;
+      }
     }
+
     return user;
     // pool.close();
   }
