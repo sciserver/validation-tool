@@ -72,12 +72,12 @@ export class UsersService {
       .query(`SELECT id, first_name, last_name, email
         FROM susd_user WHERE email = @Email
         AND password = HASHBYTES('SHA2_256', @Password)`);
-    if (result.recordset && result.recordset.length > 0) {
+    if (result.recordset?.length) {
       user = result.recordset[0] as User;
       const roles = await pool.request()
         .input('SUSD_USER_ID', Int, user.id)
         .query('SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID');
-      if (roles.recordset && roles.recordset.length > 0) {
+      if (roles.recordset?.length) {
         const privileges = roles.recordset;
         privileges.forEach(element => {
           element['roles'] = JSON.parse(element['roles'])
