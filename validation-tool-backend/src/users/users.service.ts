@@ -64,21 +64,21 @@ export class UsersService {
   async loginUserByEmail(email: string, password: string): Promise<User> {
     let user: User = null;
     const pool = await this.databaseService.getConnection();
-    const result = await // .input('ObjectTypeID', BigInt, 1)
-    pool
+    const result = await pool
       .request()
       .input('Email', VarChar, email)
       .input('Password', VarChar, password)
       .query(`SELECT id, first_name, last_name, email
         FROM susd_user WHERE email = @Email
         AND password = HASHBYTES('SHA2_256', @Password)`);
-    if (result.recordset?.length) {
-      user = result.recordset[0] as User;
+    const userArray: User[] = result.recordset;
+    if (userArray?.length) {
+      user = userArray[0] as User;
       const roles = await pool.request()
         .input('SUSD_USER_ID', Int, user.id)
         .query('SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID');
-      if (roles.recordset?.length) {
-        const privileges = roles.recordset;
+      const privileges = roles.recordset;
+      if (privileges?.length) {
         privileges.forEach(element => {
           element['roles'] = JSON.parse(element['roles'])
         });
@@ -87,6 +87,5 @@ export class UsersService {
     }
 
     return user;
-    // pool.close();
   }
 }
