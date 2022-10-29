@@ -44,3 +44,20 @@ export interface ReviewReportItem {
   assigned_items: number;
   not_answered: number;
 }
+
+export interface ReviewProgressDto {
+  run_id: number;
+  n_revd: number;
+  n_tot: number;
+  pct_complete: number;
+}
+
+export interface ReviewStatistics {
+  n_datasets: number;
+  n_dyads: number;
+  n_mention_candidates: number;
+  n_publications: number;
+  n_snippets_noempty: number;
+  n_snippets_total: number;
+  n_total_dyads: number;
+}
