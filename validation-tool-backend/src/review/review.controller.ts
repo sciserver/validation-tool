@@ -80,7 +80,9 @@ export class ReviewController {
     @Req() req
     ) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
+    const run_ids = user?.privileges
+        .filter((p) => p.roles.includes("ADMIN"))
+        .map((x) => x.run_id);
     const result = await this.reviewService.getProgress(run_ids);
     return result;
   }

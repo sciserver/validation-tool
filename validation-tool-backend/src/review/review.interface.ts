@@ -52,7 +52,7 @@ export interface ReviewProgressDto {
   pct_complete: number;
 }
 
-export interface ReviewStatistics {
+export interface ReviewStatisticsDto {
   n_datasets: number;
   n_dyads: number;
   n_mention_candidates: number;
