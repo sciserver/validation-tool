@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BigInt, Int, VarChar, Table } from 'mssql';
+import { BigInt, Int, VarChar } from 'mssql';
 import { DatabaseService } from 'src/database/database.service';
 import {
   ReviewItem,
@@ -283,7 +283,8 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
       
       const result = await pool
         .request()
-        .query(`WITH r AS 
+        .query(`
+      WITH r AS 
         (SELECT  
           CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
           d.run_id AS run_id
