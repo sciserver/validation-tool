@@ -7,7 +7,7 @@ import { authService } from '@/services'
 Vue.use(Vuex)
 
 let currentToken = localStorage.getItem('token') || null
-let currentUser  = currentToken ? jwtDecode(currentToken) : null
+let currentUser = currentToken ? jwtDecode(currentToken) : null
 
 // if token is expired
 if (currentUser && currentUser.exp * 1000 < new Date().getTime()) {
@@ -20,9 +20,10 @@ export default new Vuex.Store({
   state: {
     token: currentToken,
     user: currentUser,
+    isAdmin: false
   },
   actions: {
-    login({commit}, { username, password }) {
+    login({ commit }, { username, password }) {
       commit('auth_request')
       return authService
         .authenticate(username, password)
@@ -38,7 +39,7 @@ export default new Vuex.Store({
           commit('auth_error', err)
         })
     },
-    logout({commit}) {
+    logout({ commit }) {
       localStorage.removeItem('token')
       commit('logout')
     },
@@ -64,6 +65,9 @@ export default new Vuex.Store({
   getters: {
     isLoggedIn(state) {
       return state.token && state.user
+    },
+    isAdmin(state) {
+      return state.user.privileges.some(p => p.roles.includes("ADMIN"));
     },
     token(state) {
       return state.token

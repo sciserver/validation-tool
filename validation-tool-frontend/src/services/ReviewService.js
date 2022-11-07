@@ -11,7 +11,7 @@ class ReviewService {
       params: {
         'page_size': pageSize,
         'page_number': nextPage,
-        'do_show_reviewed_items':  1*doShowReviewedItems
+        'do_show_reviewed_items': 1 * doShowReviewedItems
       },
       headers: authHeader(),
     }
@@ -27,7 +27,29 @@ class ReviewService {
 
   getPendingReviewsCount(doShowReviewedItems) {
     return api
-      .get('/review/count', { headers: authHeader(), params: {'do_show_reviewed_items':  1*doShowReviewedItems} })
+      .get('/review/count', { headers: authHeader(), params: { 'do_show_reviewed_items': 1 * doShowReviewedItems } })
+      .then(response => {
+        return response.data
+      })
+      .catch(err => {
+        throw err.response
+      })
+  }
+
+  getReviewProgress() {
+    return api
+      .get('/review/progress', { headers: authHeader() })
+      .then(response => {
+        return response.data
+      })
+      .catch(err => {
+        throw err.response
+      })
+  }
+
+  getReviewStatistics() {
+    return api
+      .get('/review/statistics', { headers: authHeader() })
       .then(response => {
         return response.data
       })

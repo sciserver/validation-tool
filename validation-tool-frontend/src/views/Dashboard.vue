@@ -3,29 +3,31 @@
     <div class="header">
       <h2>Dashboard</h2>
     </div>
-    <div class="agency">
+    <div v-for="a in Object.values(agencies)" :key="a.run_id" class="agency">
       <div class="run-metadata">
         <div class="metadata">
           <div class="run-metadata run-title">
-            <h3 class="agency-name">USDA</h3>
-            <v-chip class="chip" color="#E0FBFC" text-color="#3D5A80">20220507</v-chip>
+            <h3 class="agency-name">{{ agencyRuns[a.run_id].agency }}</h3>
+            <v-chip class="chip" color="#E0FBFC" text-color="#3D5A80">{{ agencyRuns[a.run_id].version }}</v-chip>
           </div>
           <div class="run-metadata">
             <h6 class="label"> Run date: </h6>
-            <p> 3/5/2022 12:00 AM </p>
+            <p> {{ agencyRuns[a.run_id].run_date }} </p>
           </div>
           <div class="run-metadata">
             <h6 class="label"> Last updated: </h6>
-            <p> 7/8/2022 1:45 PM </p>
+            <p> {{ agencyRuns[a.run_id].last_updated }} </p>
           </div>
         </div>
         <div class="progress-info">
-          <h3>{{progressUsda}} % </h3>
-          <v-progress-linear class="progress" color="error" v-model="progressUsda" :height="12"></v-progress-linear>
+          <h3>{{ a.pct_complete.toFixed(2) }} % </h3>
+          <v-progress-linear class="progress" color="error" v-model="a.pct_complete" :height="12">
+          </v-progress-linear>
+          <p>(snippets reviewed)</p>
         </div>
       </div>
       <v-row>
-        <v-col v-for="({ actionIcon, actionText, ...attrs }, i) in usdaStats" :key="i" cols="12" md="6" lg="3">
+        <v-col v-for="({ actionIcon, actionText, ...attrs }, i) in a.statistics" :key="i" cols="12" md="6" lg="3">
           <MaterialStatCard v-bind="attrs">
             <template #actions>
               <v-icon class="mr-2" small v-text="actionIcon" />
@@ -41,6 +43,7 @@
 </template>
 
 <script>
+import { reviewService } from '@/services';
 import MaterialStatCard from '../components/MaterialStatsCard.vue';
 
 export default {
@@ -48,78 +51,114 @@ export default {
   components: {
     MaterialStatCard
   },
+  mounted() {
+    this.fetchReviewStatistics();
+  },
   data: () => ({
-    progressNasa: 97.8,
-    progressUsda: 76.9,
-    nasaStats: [
-      {
-        actionIcon: 'mdi-alert',
-        actionText: 'Some additional info',
-        color: '#FD9A13',
-        icon: 'mdi-database',
-        title: 'Datasets',
-        value: '12',
+    agencies: [],
+    agencyRuns: {
+      "1": {
+        "run_id": 1,
+        "agency": "NASA",
+        "version": "20220524",
+        "run_date": "3/22/2022",
+        "last_updated": "7/8/2022",
       },
-      {
-        actionIcon: 'mdi-tag',
-        actionText: 'Some additional info',
-        color: 'primary',
-        icon: 'mdi-chart-bar',
-        title: 'Dyads',
-        value: '4925',
+      "2": {
+        "run_id": 2,
+        "agency": "USDA",
+        "version": "20220507",
+        "run_date": "3/5/2022",
+        "last_updated": "7/8/2022",
       },
-      {
-        actionIcon: 'mdi-calendar-range',
-        actionText: 'Total snippets',
-        color: 'success',
-        icon: 'mdi-clipboard-text-multiple',
-        title: 'Snippets',
-        value: '2567',
+      "3": {
+        "run_id": 3,
+        "agency": "NSF",
+        "version": "20220603",
+        "run_date": "5/21/2022",
+        "last_updated": "7/8/2022",
       },
-      {
-        actionIcon: 'mdi-history',
-        actionText: 'More info',
-        color: 'info',
-        icon: 'mdi-script-text',
-        title: 'Publications',
-        value: '927',
+      "4": {
+        "run_id": 4,
+        "agency": "NOAA",
+        "version": "20220722_004",
+        "last_updated": "9/21/2022",
       },
-    ],
-    usdaStats: [
-      {
-        actionIcon: 'mdi-alert',
-        actionText: 'Some additional info',
-        color: '#FD9A13',
-        icon: 'mdi-database',
-        title: 'Datasets',
-        value: '2',
+      "5": {
+        "run_id": 5,
+        "agency": "NCES",
+        "version": "20220714_005",
+        "last_updated": "9/21/2022",
       },
-      {
-        actionIcon: 'mdi-tag',
-        actionText: 'Some additional info',
-        color: 'primary',
-        icon: 'mdi-chart-bar',
-        title: 'Dyads',
-        value: '10165',
+      "9": {
+        "run_id": 9,
+        "agency": "Deutsche Bundesbank",
+        "version": "20220926_009",
+        "last_updated": "10/10/2022",
       },
-      {
-        actionIcon: 'mdi-calendar-range',
-        actionText: 'Total snippets',
-        color: 'success',
-        icon: 'mdi-clipboard-text-multiple',
-        title: 'Snippets',
-        value: '4417',
+      "10": {
+        "run_id": 10,
+        "agency": "RUCC",
+        "version": "20221014_009",
+        "last_updated": "10/15/2022",
       },
-      {
-        actionIcon: 'mdi-history',
-        actionText: 'More info',
-        color: 'info',
-        icon: 'mdi-script-text',
-        title: 'Publications',
-        value: '2074',
-      },
-    ],
+    }
   }),
+  methods: {
+    fetchReviewStatistics() {
+      const agenciesData = {};
+      reviewService.getReviewProgress()
+        .then((data) => {
+          for (const a of data) {
+            agenciesData[a.run_id] = a;
+          }
+        })
+      reviewService.getReviewStatistics()
+        .then((data) => {
+          console.log(data);
+          let stats = [];
+          for (const key of Object.keys(agenciesData)) {
+            stats = [
+              {
+                actionIcon: 'mdi-alert',
+                actionText: 'Some additional info',
+                color: '#FD9A13',
+                icon: 'mdi-database',
+                title: 'Datasets',
+                value: data[key].n_datasets.toString(),
+              },
+              {
+                actionIcon: 'mdi-tag',
+                actionText: 'Some additional info',
+                color: 'primary',
+                icon: 'mdi-chart-bar',
+                title: 'Dyads',
+                value: data[key].n_dyads.toString(),
+              },
+              {
+                actionIcon: 'mdi-calendar-range',
+                actionText: 'Total snippets',
+                color: 'success',
+                icon: 'mdi-clipboard-text-multiple',
+                title: 'Snippets',
+                value: data[key].n_snippets_total.toString(),
+              },
+              {
+                actionIcon: 'mdi-history',
+                actionText: 'More info',
+                color: 'info',
+                icon: 'mdi-script-text',
+                title: 'Publications',
+                value: data[key].n_publications.toString(),
+              },
+            ];
+            agenciesData[key].statistics = stats;
+          }
+          console.log(agenciesData);
+          this.agencies = agenciesData;
+        })
+    },
+  }
 }
 </script>
 
@@ -170,6 +209,8 @@ h6 {
 p {
   margin: 0;
 }
+
+.overline {}
 
 .agency-name {
   color: #293241;
