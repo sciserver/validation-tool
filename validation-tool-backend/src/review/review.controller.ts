@@ -73,4 +73,28 @@ export class ReviewController {
     );
     return true;
   }
+
+  @Get('/progress')
+  @UseGuards(JwtAuthGuard)
+  async getReviewProgress(
+    @Req() req
+    ) {
+    const user: any = req.user;
+    const run_ids = user?.privileges
+        .filter((p) => p.roles.includes("ADMIN"))
+        .map((x) => x.run_id);
+    const result = await this.reviewService.getProgress(run_ids);
+    return result;
+  }
+
+  @Get('/statistics')
+  @UseGuards(JwtAuthGuard)
+  async getStatistics(
+    @Req() req
+    ) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getStatistics(run_ids);
+    return result;
+  }
 }

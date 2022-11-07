@@ -6,6 +6,8 @@ import {
   ValidationGenericMetadataDto,
   ValidationTableItemDto,
   ReviewReportItem,
+  ReviewProgressDto,
+  ReviewStatisticsDto,
 } from './review.interface';
 
 @Injectable()
@@ -269,5 +271,77 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
         );
       }
     }
+  }
+
+  async getProgress(
+    run_ids: number[]
+  ): Promise<ReviewProgressDto[]> {
+    let response: ReviewProgressDto[] = undefined;
+    if (run_ids.length) {
+      const pool = await this.databaseService.getConnection();
+      let sql_run_ids = run_ids.join(',');
+      
+      const result = await pool
+        .request()
+        .query(`
+      WITH r AS 
+        (SELECT  
+          CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
+          d.run_id AS run_id
+        FROM dyad d LEFT JOIN snippet_validation sv ON (sv.dyad_id = d.id)
+        WHERE d.alias_id IS NOT NULL AND snippet IS NOT NULL
+        )
+      SELECT run_id, SUM(revd) as n_revd, COUNT(*) AS n_tot, SUM(revd)/(COUNT(*)*1.0)*100 as pct_complete
+        FROM r
+        WHERE run_id IN (${sql_run_ids})
+        GROUP BY run_id
+        ORDER BY run_id;`);
+      if (result?.recordset.length ) {
+        response = result.recordset;
+      }
+    }
+    return response;
+  }
+
+  async getStatistics (
+    run_ids: number[]
+  ): Promise<{ [id: string] : ReviewStatisticsDto; }> {
+    let response: { [id: string] : ReviewStatisticsDto; } = {};
+    if (run_ids.length) {
+      const pool = await this.databaseService.getConnection();
+      let sql_run_ids = run_ids.join(',');
+      
+      const result = await pool
+        .request()
+        .query(` WITH u AS (
+          SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
+          UNION
+          SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
+          UNION
+          SELECT d.run_id r, 'n_datasets' k, count(distinct(da.parent_alias_id)) v FROM dyad d JOIN dataset_alias da ON d.alias_id = da.alias_id GROUP BY d.run_id
+          UNION
+          SELECT run_id r, 'n_dyads' k, sum(n) FROM (SELECT run_id, 1 n FROM dyad GROUP BY run_id, publication_id, mention_candidate) x GROUP BY run_id
+          UNION
+          SELECT run_id r, 'n_snippets_total' k, count(*) v FROM dyad GROUP BY run_id
+          UNION
+          SELECT run_id r, 'n_snippets_nonempty' k, count(*) v FROM dyad WHERE snippet IS NOT NULL AND snippet != '' GROUP BY run_id
+          UNION
+          SELECT run_id r, 'n_total_dyads' k, count(*) v FROM dyad_model GROUP BY run_id
+          UNION
+          SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
+      )
+      SELECT * FROM u
+      WHERE r IN (${sql_run_ids})
+      ORDER BY r, k;`);
+      if (result?.recordset.length ) {
+        result.recordset.forEach((rc) => {
+          if(! (rc['r'] in response)) {
+            response[rc['r']] = {} as ReviewStatisticsDto;
+          }
+          response[rc['r']][rc['k']] = rc['v']
+        })
+      }
+    }
+    return response;
   }
 }

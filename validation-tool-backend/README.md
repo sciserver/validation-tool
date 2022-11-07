@@ -58,6 +58,71 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Testing the API
+
+### Sign IN - Login endpoint
+#### Request:
+
+```  
+curl 'http://localhost:3000/auth/login' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"username":"<user_email>","password":"<user_password>"}' 
+```
+#### Response:
+```
+{
+    "access_token": "<access_token>"
+}
+```
+### Calling the get Admin Progress endpoint with the access_token from the login endpoint
+#### Request:
+```
+curl --location --request GET 'http://localhost:3000/review/progress' \
+--header 'Authorization: Bearer <access_token>'
+```
+#### Response:
+```
+[
+  {
+    "run_id": 1,
+    "n_revd": 1,
+    "n_tot": 1,
+    "pct_complete": 1
+  },
+  ...
+]
+```
+### Calling the get Admin Statistics endpoint with the access_token from the login endpoint
+#### Request:
+```
+curl --location --request GET 'http://localhost:3000/review/statistics' \
+--header 'Authorization: Bearer <access_token>'
+```
+#### Response:
+```
+{
+    "1": {
+        "n_datasets": 12,
+        "n_dyads": 625,
+        "n_mention_candidates": 38,
+        "n_publications": 927,
+        "n_snippets_nonempty": 2567,
+        "n_snippets_total": 2567,
+        "n_total_dyads": 4925
+    },
+    "3": {
+        "n_datasets": 12,
+        "n_dyads": 913,
+        "n_mention_candidates": 248,
+        "n_publications": 800,
+        "n_snippets_nonempty": 1259,
+        "n_snippets_total": 1259,
+        "n_total_dyads": 2633
+    }
+}
+```
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
