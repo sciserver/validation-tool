@@ -60,8 +60,8 @@ $ npm run test:cov
 
 ## Testing the API
 
-- Sign IN - Login endpoint
-  - Request:
+### Sign IN - Login endpoint
+#### Request:
 
 ```  
 curl 'http://localhost:3000/auth/login' \
@@ -69,19 +69,19 @@ curl 'http://localhost:3000/auth/login' \
   -H 'Content-Type: application/json' \
   --data-raw '{"username":"<user_email>","password":"<user_password>"}' 
 ```
-  - Response:
+#### Response:
 ```
 {
     "access_token": "<access_token>"
 }
 ```
-- Calling the get Admin Progress endpoint with the access_token from the login endpoint
-  - Request:
+### Calling the get Admin Progress endpoint with the access_token from the login endpoint
+#### Request:
 ```
 curl --location --request GET 'http://localhost:3000/review/progress' \
 --header 'Authorization: Bearer <access_token>'
 ```
-  - Response:
+#### Response:
 ```
 [
   {
@@ -93,13 +93,13 @@ curl --location --request GET 'http://localhost:3000/review/progress' \
   ...
 ]
 ```
-- Calling the get Admin Statistics endpoint with the access_token from the login endpoint
-  - Request:
+### Calling the get Admin Statistics endpoint with the access_token from the login endpoint
+#### Request:
 ```
 curl --location --request GET 'http://localhost:3000/review/statistics' \
 --header 'Authorization: Bearer <access_token>'
 ```
-  - Response:
+#### Response:
 ```
 {
     "1": {
