@@ -61,21 +61,28 @@ $ npm run test:cov
 ## Testing the API
 
 - Sign IN - Login endpoint
-Request:
+  - Request:
+
+```  
 curl 'http://localhost:3000/auth/login' \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
   --data-raw '{"username":"<user_email>","password":"<user_password>"}' 
-Response:
+```
+  - Response:
+```
 {
     "access_token": "<access_token>"
 }
-
+```
 - Calling the get Admin Progress endpoint with the access_token from the login endpoint
-Request:
+  - Request:
+```
 curl --location --request GET 'http://localhost:3000/review/progress' \
 --header 'Authorization: Bearer <access_token>'
-Response:
+```
+  - Response:
+```
 [
   {
     "run_id": 1,
@@ -85,13 +92,15 @@ Response:
   },
   ...
 ]
-
+```
 - Calling the get Admin Statistics endpoint with the access_token from the login endpoint
-Request:
+  - Request:
+```
 curl --location --request GET 'http://localhost:3000/review/statistics' \
 --header 'Authorization: Bearer <access_token>'
-
-Response:
+```
+  - Response:
+```
 {
     "1": {
         "n_datasets": 12,
@@ -112,7 +121,7 @@ Response:
         "n_total_dyads": 2633
     }
 }
-
+```
 
 ## Support
 
