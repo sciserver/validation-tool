@@ -16,11 +16,11 @@
       <v-list nav dense>
         <v-list-item-group v-model="group" active-class="deep-purple--text text--accent-4">
           <v-list-item>
-            <v-list-item-title to="/">Home</v-list-item-title>
+            <v-list-item-title @click="$router.push('/review')">Home</v-list-item-title>
           </v-list-item>
 
           <v-list-item>
-            <v-list-item-title link to="/dashboard">Dashboard</v-list-item-title>
+            <v-list-item-title @click="$router.push('/dashboard')">Admin Dashboard</v-list-item-title>
           </v-list-item>
         </v-list-item-group>
       </v-list>
@@ -37,7 +37,7 @@ export default {
   data: () => ({
     currentRoute: null,
     drawer: false,
-    group: null,
+    group: 0,
   }),
   computed: {
     isLoggedIn() {
@@ -58,9 +58,6 @@ export default {
   watch: {
     $route(to, from) {  // eslint-disable-line no-unused-vars
       this.currentRoute = to
-    },
-    group() {
-      this.drawer = false
     },
   },
 }
