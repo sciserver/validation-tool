@@ -65,11 +65,13 @@ export class ReviewService {
 
   async getReviewItensCount(
     source_id: number,
-    do_show_reviewed_items = 1
+    do_show_reviewed_items = 1,
   ): Promise<{ total: number; answered: number }> {
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().input('EntityID', BigInt, source_id).input('DoShowWReviewedItems', Int, do_show_reviewed_items)
-      .query(`SELECT 
+    const result = await pool
+      .request()
+      .input('EntityID', BigInt, source_id)
+      .input('DoShowWReviewedItems', Int, do_show_reviewed_items).query(`SELECT 
       COUNT(*) as items_number,
       SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
       su.id as entity_id
@@ -99,7 +101,6 @@ export class ReviewService {
     return count_result;
   }
 
-
   async updateDatasetAliasCandidateReview(
     user_id: number,
     validation: ValidationGenericMetadataDto,
@@ -121,7 +122,6 @@ export class ReviewService {
     return this.updateDatasetAliasCandidateReview(user_id, validation);
   }
 
-
   async updateParentAliasReview(
     source_id: number,
     validation: ValidationGenericMetadataDto,
@@ -136,12 +136,11 @@ export class ReviewService {
     return result.rowsAffected;
   }
 
-
   async reviewDatasetMentionParentAlias(
     source_id: number,
     validation: ValidationGenericMetadataDto,
   ) {
-      return this.updateParentAliasReview(source_id, validation);
+    return this.updateParentAliasReview(source_id, validation);
   }
 
   async getValidation(
@@ -211,7 +210,11 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     return items;
   }
 
-  async assignitems(source_id: number, organization_source_id: number, organization_name: string) {
+  async assignitems(
+    source_id: number,
+    organization_source_id: number,
+    organization_name: string,
+  ) {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
@@ -258,9 +261,7 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
   async checkAndAssignNewItems() {
     const report = await this.getReviewReport();
     for (const reportItem of report) {
-      if (
-        reportItem.not_answered === 0 
-      ) {
+      if (reportItem.not_answered === 0) {
         await this.deleteAssignments(reportItem.user_metadata_source_id);
         await this.assignitems(
           reportItem.user_metadata_source_id,
