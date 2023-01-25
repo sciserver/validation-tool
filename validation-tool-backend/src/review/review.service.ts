@@ -67,11 +67,13 @@ export class ReviewService {
 
   async getReviewItensCount(
     source_id: number,
-    do_show_reviewed_items = 1
+    do_show_reviewed_items = 1,
   ): Promise<{ total: number; answered: number }> {
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().input('EntityID', BigInt, source_id).input('DoShowWReviewedItems', Int, do_show_reviewed_items)
-      .query(`SELECT 
+    const result = await pool
+      .request()
+      .input('EntityID', BigInt, source_id)
+      .input('DoShowWReviewedItems', Int, do_show_reviewed_items).query(`SELECT 
       COUNT(*) as items_number,
       SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
       su.id as entity_id
@@ -101,7 +103,6 @@ export class ReviewService {
     return count_result;
   }
 
-
   async updateDatasetAliasCandidateReview(
     user_id: number,
     validation: ValidationGenericMetadataDto,
@@ -123,7 +124,6 @@ export class ReviewService {
     return this.updateDatasetAliasCandidateReview(user_id, validation);
   }
 
-
   async updateParentAliasReview(
     source_id: number,
     validation: ValidationGenericMetadataDto,
@@ -138,12 +138,11 @@ export class ReviewService {
     return result.rowsAffected;
   }
 
-
   async reviewDatasetMentionParentAlias(
     source_id: number,
     validation: ValidationGenericMetadataDto,
   ) {
-      return this.updateParentAliasReview(source_id, validation);
+    return this.updateParentAliasReview(source_id, validation);
   }
 
   async getValidation(
@@ -213,7 +212,11 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     return items;
   }
 
-  async assignitems(source_id: number, organization_source_id: number, organization_name: string) {
+  async assignitems(
+    source_id: number,
+    organization_source_id: number,
+    organization_name: string,
+  ) {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
@@ -260,9 +263,7 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
   async checkAndAssignNewItems() {
     const report = await this.getReviewReport();
     for (const reportItem of report) {
-      if (
-        reportItem.not_answered === 0 
-      ) {
+      if (reportItem.not_answered === 0) {
         await this.deleteAssignments(reportItem.user_metadata_source_id);
         await this.assignitems(
           reportItem.user_metadata_source_id,
@@ -273,17 +274,13 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     }
   }
 
-  async getProgress(
-    run_ids: number[]
-  ): Promise<ReviewProgressDto[]> {
+  async getProgress(run_ids: number[]): Promise<ReviewProgressDto[]> {
     let response: ReviewProgressDto[] = undefined;
     if (run_ids.length) {
       const pool = await this.databaseService.getConnection();
-      let sql_run_ids = run_ids.join(',');
-      
-      const result = await pool
-        .request()
-        .query(`
+      const sql_run_ids = run_ids.join(',');
+
+      const result = await pool.request().query(`
       WITH r AS 
         (SELECT  
           CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
@@ -296,24 +293,22 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
         WHERE run_id IN (${sql_run_ids})
         GROUP BY run_id
         ORDER BY run_id;`);
-      if (result?.recordset.length ) {
+      if (result?.recordset.length) {
         response = result.recordset;
       }
     }
     return response;
   }
 
-  async getStatistics (
-    run_ids: number[]
-  ): Promise<{ [id: string] : ReviewStatisticsDto; }> {
-    let response: { [id: string] : ReviewStatisticsDto; } = {};
+  async getStatistics(
+    run_ids: number[],
+  ): Promise<{ [id: string]: ReviewStatisticsDto }> {
+    const response: { [id: string]: ReviewStatisticsDto } = {};
     if (run_ids.length) {
       const pool = await this.databaseService.getConnection();
-      let sql_run_ids = run_ids.join(',');
-      
-      const result = await pool
-        .request()
-        .query(` WITH u AS (
+      const sql_run_ids = run_ids.join(',');
+
+      const result = await pool.request().query(` WITH u AS (
           SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
           UNION
           SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
@@ -333,13 +328,13 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
       SELECT * FROM u
       WHERE r IN (${sql_run_ids})
       ORDER BY r, k;`);
-      if (result?.recordset.length ) {
+      if (result?.recordset.length) {
         result.recordset.forEach((rc) => {
-          if(! (rc['r'] in response)) {
+          if (!(rc['r'] in response)) {
             response[rc['r']] = {} as ReviewStatisticsDto;
           }
-          response[rc['r']][rc['k']] = rc['v']
-        })
+          response[rc['r']][rc['k']] = rc['v'];
+        });
       }
     }
     return response;
