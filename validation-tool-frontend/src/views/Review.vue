@@ -172,7 +172,7 @@ export default {
   },
   methods: {
     fetchReviewsCount() {
-      return reviewService.getPendingReviewsCount(!this.hideReviewedItems)
+      return reviewService.getPendingReviewsCount(true)
       //return reviewService.getPendingReviewsCount(true)
         .then((data) => {
           this.totalPending = data.total
