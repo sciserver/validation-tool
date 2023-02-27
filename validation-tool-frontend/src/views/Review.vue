@@ -109,20 +109,35 @@
           v-model="currentPage"
           :length="totalPages"
           :total-visible="7"
+          v-if="renderComponent"
           @input="loadPage"
           @next="loadPage"
           @previous="loadPage">
         </v-pagination>
       </v-col>
-      <v-col cols="2" offset="5">
-        <v-select outlined dense
-          v-model="pageSize"
-          :items="pageSizeOptions"
-          @change="updatePageSize">
+    </v-row>
+    <v-row class="pagination" v-show="totalReviewsAlreadyRetrieved && !loadingReviews">
+      <v-col cols="2" offset="4">
+        <v-text-field
+          v-model="typedPage"
+          @change="handleTypedCurrentPage"
+          outlined dense
+        >
           <template v-slot:prepend>
-            <div class="pagination-label">Items per page:</div>
+            <div class="pagination-label">Current Page:</div>
           </template>
-        </v-select>
+        </v-text-field>
+      </v-col>
+        <v-col cols="2" >
+          <v-select outlined dense
+            v-model="pageSize"
+            :items="pageSizeOptions"
+            @change="updatePageSize"
+            >
+            <template v-slot:prepend>
+              <div class="pagination-label">Items per page:</div>
+            </template>
+          </v-select>
       </v-col>
     </v-row>
   </v-container>
@@ -146,6 +161,8 @@ export default {
     loadingReviews: false,
     hideReviewedItems: false,
     numSnippets: 0,
+    renderComponent: true,
+    typedPage: 1,
   }),
   created() {
     // nothing
@@ -319,7 +336,19 @@ export default {
       review.overlay = false
       review.beingEdited = true
     },
+    handleTypedCurrentPage() {
+      // Removing my-component from the DOM
+      this.renderComponent = false;
+      this.currentPage = parseInt(this.typedPage);
+      this.loadPage();
+      this.totalVisible = 7;
+      this.$nextTick(() => {
+        // Adding the component back in
+        this.renderComponent = true;
+      });
+    },
     loadPage() {
+      this.typedPage = this.currentPage;
       this.pendingReviews = []
       this.fetchReviews()
       this.fetchReviewsCount()
