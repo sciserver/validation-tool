@@ -22,9 +22,9 @@ export class ReviewService {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
-      .input('EntityID', BigInt, source_id) // EntityID or source_id is the ID of the user.
-      .input('Fetch', BigInt, page_size)
-      .input('Offset', BigInt, page_number * page_size)
+      .input('EntityID', Int, source_id) // EntityID or source_id is the ID of the user.
+      .input('Fetch', Int, page_size)
+      .input('Offset', Int, page_number * page_size)
       .input('DoShowWReviewedItems', Bit, do_show_reviewed_items).query(`SELECT 
       su.id as user_metadata_source_id,
       sv.id as dataset_mention_generic_metadata_id,
@@ -70,7 +70,7 @@ export class ReviewService {
     const pool = await this.databaseService.getConnection();
     const result = await pool
       .request()
-      .input('EntityID', BigInt, source_id)
+      .input('EntityID', Int, source_id)
       .input('DoShowWReviewedItems', Bit, do_show_reviewed_items).query(`SELECT 
       COUNT(*) as items_number,
       SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
