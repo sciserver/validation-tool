@@ -30,11 +30,16 @@ export class ReviewController {
       page_number = 0;
     }
     const user: User = req.user;
+    if (do_show_reviewed_items == '1') {
+      do_show_reviewed_items = true;
+    } else {
+      do_show_reviewed_items = false;
+    }
     return await this.reviewService.getReviewItems(
       user.id,
       page_size,
       page_number,
-      do_show_reviewed_items
+      do_show_reviewed_items,
     );
   }
 
@@ -42,10 +47,18 @@ export class ReviewController {
   @UseGuards(JwtAuthGuard)
   async getReviewItensCount(
     @Req() req,
-    @Query('do_show_reviewed_items') do_show_reviewed_items
-    ) {
+    @Query('do_show_reviewed_items') do_show_reviewed_items,
+  ) {
     const user: User = req.user;
-    const result = await this.reviewService.getReviewItensCount(user.id, do_show_reviewed_items);
+    if (do_show_reviewed_items == '1') {
+      do_show_reviewed_items = true;
+    } else {
+      do_show_reviewed_items = false;
+    }
+    const result = await this.reviewService.getReviewItensCount(
+      user.id,
+      do_show_reviewed_items,
+    );
     return result;
   }
 
@@ -67,10 +80,7 @@ export class ReviewController {
     @Body() body: ValidationGenericMetadataDto,
   ) {
     const user: User = req.user;
-    await this.reviewService.reviewDatasetMentionParentAlias(
-      user.id,
-      body,
-    );
+    await this.reviewService.reviewDatasetMentionParentAlias(user.id, body);
     return true;
   }
 

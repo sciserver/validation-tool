@@ -296,11 +296,14 @@ export default {
       if (review.dataset_mention_answered 
         && review.dataset_mention_parent_answered
         && !(review.beingEdited)) {
-        this.totalReviewed++ // increment counter for completed reviews
+        //this.totalReviewed++ // increment counter for completed reviews
         if (this.hideReviewedItems) {
           // this.pendingReviews = this.pendingReviews.filter(r => r.id != review.id)
           this.loadPage()
+        } else {
+          this.fetchReviewsCount()
         }
+        
       }
       // review.answered = true
       review.overlay = true
@@ -319,6 +322,7 @@ export default {
     loadPage() {
       this.pendingReviews = []
       this.fetchReviews()
+      this.fetchReviewsCount()
     },
     updatePageSize() {
       this.currentPage = 1
