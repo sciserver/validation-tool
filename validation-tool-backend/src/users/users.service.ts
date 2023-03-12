@@ -74,13 +74,16 @@ export class UsersService {
     const userArray: User[] = result.recordset;
     if (userArray?.length) {
       user = userArray[0] as User;
-      const roles = await pool.request()
+      const roles = await pool
+        .request()
         .input('SUSD_USER_ID', Int, user.id)
-        .query('SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID');
+        .query(
+          'SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID',
+        );
       const privileges = roles.recordset;
       if (privileges?.length) {
-        privileges.forEach(element => {
-          element['roles'] = JSON.parse(element['roles'])
+        privileges.forEach((element) => {
+          element['roles'] = JSON.parse(element['roles']);
         });
         user['privileges'] = privileges;
       }

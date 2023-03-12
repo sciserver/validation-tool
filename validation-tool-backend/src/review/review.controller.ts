@@ -86,25 +86,70 @@ export class ReviewController {
 
   @Get('/progress')
   @UseGuards(JwtAuthGuard)
-  async getReviewProgress(
-    @Req() req
-    ) {
+  async getReviewProgress(@Req() req) {
     const user: any = req.user;
     const run_ids = user?.privileges
-        .filter((p) => p.roles.includes("ADMIN"))
-        .map((x) => x.run_id);
+      .filter((p) => p.roles.includes('ADMIN'))
+      .map((x) => x.run_id);
     const result = await this.reviewService.getProgress(run_ids);
     return result;
   }
 
   @Get('/statistics')
   @UseGuards(JwtAuthGuard)
-  async getStatistics(
-    @Req() req
-    ) {
+  async getStatistics(@Req() req) {
     const user: any = req.user;
     const run_ids = user?.privileges.map((x) => x.run_id);
     const result = await this.reviewService.getStatistics(run_ids);
+    return result;
+  }
+
+  @Get('/datasets') // Query: Dataset Names and Aliases
+  @UseGuards(JwtAuthGuard)
+  async getDatasetNamesAndAliases(@Req() req) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getDatasetNamesAndAliases(run_ids);
+    return result;
+  }
+
+  @Get('/datasets/statistics') // Query: Dataset Reviews Statistics
+  @UseGuards(JwtAuthGuard)
+  async getDatasetStatistics(@Req() req) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getDatasetStatistics(run_ids);
+    return result;
+  }
+
+  @Get('/datasets/ml_models/statistics') // Query: ML Models statistics
+  @UseGuards(JwtAuthGuard)
+  async getMachineLearningModelStatistics(@Req() req) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getMachineLearningModelStatistics(
+      run_ids,
+    );
+    return result;
+  }
+
+  @Get('/topics/publication_count') // Query: Num Publications per Topic
+  @UseGuards(JwtAuthGuard)
+  async getTotalPublicationsPerTopic(@Req() req) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getTotalPublicationsPerTopic(
+      run_ids,
+    );
+    return result;
+  }
+
+  @Get('/reviewers') // Query: Reviewers & Admins
+  @UseGuards(JwtAuthGuard)
+  async getReviewers(@Req() req) {
+    const user: any = req.user;
+    const run_ids = user?.privileges.map((x) => x.run_id);
+    const result = await this.reviewService.getReviewers(run_ids);
     return result;
   }
 }
