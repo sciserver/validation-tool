@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { VarChar, Int } from 'mssql';
+import { Role } from '../auth/role.enum';
 import { DatabaseService } from 'src/database/database.service';
 import { User } from './user.interface';
 
@@ -33,6 +34,12 @@ export class UsersService {
       first_name: 'john',
       email: 'john@test.com',
       password: 'changeme',
+      privileges: [
+        {
+          run_id: 1,
+          roles: [Role.ADMIN],
+        },
+      ],
     },
     // {
     //   userId: 2,
@@ -84,6 +91,9 @@ export class UsersService {
       if (privileges?.length) {
         privileges.forEach((element) => {
           element['roles'] = JSON.parse(element['roles']);
+          element['roles'].forEach((e) => {
+            Role[e];
+          });
         });
         user['privileges'] = privileges;
       }
