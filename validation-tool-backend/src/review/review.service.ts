@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BigInt, Int, Bit, VarChar } from 'mssql';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import {
   ReviewItem,
   ValidationGenericMetadataDto,
@@ -8,12 +8,6 @@ import {
   ReviewReportItem,
   ReviewProgressDto,
   ReviewStatisticsDto,
-  DatasetNamesDto,
-  DatasetStatisticsDto,
-  TopicOccurencesDto,
-  MLModelStatisticsDto,
-  PublicationsPerTopicDto,
-  ReviewersDto,
 } from './review.interface';
 
 @Injectable()
@@ -33,38 +27,39 @@ export class ReviewService {
       .input('EntityID', BigInt, source_id) // EntityID or source_id is the ID of the user.
       .input('Fetch', BigInt, page_size)
       .input('Offset', BigInt, page_number * page_size)
-      .input('DoShowWReviewedItems', Bit, do_show_reviewed_items).query(`SELECT 
-      su.id as user_metadata_source_id,
-      sv.id as dataset_mention_generic_metadata_id,
-      dy.snippet as dataset_mention,
-      dy.id as publication_dataset_alias_id,
-      dy.publication_id as publication_id, 
-      pu.title as publication_title,
-      pu.year as publication_year, 
-      pu.doi as publication_doi,
-      dy.mention_candidate as alias_candidate,
-      da.url as dataset_mention_alias_url,
-      CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_answered,
-      CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_parent_answered,
-      CASE WHEN da_parent.alias is null THEN da.alias ELSE da_parent.alias END AS dataset_mention_parent_alias,
-      CASE WHEN da_parent.alias is null THEN da.url ELSE da_parent.url END as dataset_mention_parent_alias_url,
-      sv.is_dataset_reference as dataset_correct,
-      sv.agency_dataset_identified as alias_correct,
-      da.alias as dataset_alias
-      FROM susd_user su 
-      JOIN reviewer re ON re.susd_user_id=su.id
-      JOIN snippet_validation sv ON sv.reviewer_id = re.id  and sv.run_id=re.run_id
-      JOIN dyad dy ON dy.id = sv.dyad_id AND dy.run_id=sv.run_id
-      JOIN publication pu ON pu.id = dy.publication_id AND pu.run_id=dy.run_id
-      LEFT JOIN dataset_alias da ON da.id = dy.dataset_alias_id AND da.run_id = sv.run_id
-      LEFT JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
-      JOIN agency_run ar ON ar.id=re.run_id
-      WHERE su.id = @EntityID
-      and dy.snippet is not null 
-      and dy.mention_candidate is not null 
-      and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
-      ORDER BY dy.id
-      OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
+      .input('DoShowWReviewedItems', Bit, do_show_reviewed_items)
+      .query(`SELECT 
+                su.id as user_metadata_source_id,
+                sv.id as dataset_mention_generic_metadata_id,
+                dy.snippet as dataset_mention,
+                dy.id as publication_dataset_alias_id,
+                dy.publication_id as publication_id, 
+                pu.title as publication_title,
+                pu.year as publication_year, 
+                pu.doi as publication_doi,
+                dy.mention_candidate as alias_candidate,
+                da.url as dataset_mention_alias_url,
+                CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_answered,
+                CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END as dataset_mention_parent_answered,
+                CASE WHEN da_parent.alias is null THEN da.alias ELSE da_parent.alias END AS dataset_mention_parent_alias,
+                CASE WHEN da_parent.alias is null THEN da.url ELSE da_parent.url END as dataset_mention_parent_alias_url,
+                sv.is_dataset_reference as dataset_correct,
+                sv.agency_dataset_identified as alias_correct,
+                da.alias as dataset_alias
+              FROM susd_user su 
+              JOIN reviewer re ON re.susd_user_id=su.id
+              JOIN snippet_validation sv ON sv.reviewer_id = re.id  and sv.run_id=re.run_id
+              JOIN dyad dy ON dy.id = sv.dyad_id AND dy.run_id=sv.run_id
+              JOIN publication pu ON pu.id = dy.publication_id AND pu.run_id=dy.run_id
+              LEFT JOIN dataset_alias da ON da.id = dy.dataset_alias_id AND da.run_id = sv.run_id
+              LEFT JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
+              JOIN agency_run ar ON ar.id=re.run_id
+              WHERE su.id = @EntityID
+                and dy.snippet is not null 
+                and dy.mention_candidate is not null 
+                and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
+              ORDER BY dy.id
+              OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
     if (result.recordset && result.recordset.length > 0) {
       items = result.recordset as ReviewItem[];
     }
@@ -79,21 +74,23 @@ export class ReviewService {
     const result = await pool
       .request()
       .input('EntityID', BigInt, source_id)
-      .input('DoShowWReviewedItems', Bit, do_show_reviewed_items).query(`SELECT 
-      COUNT(*) as items_number,
-      SUM (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
-      su.id as entity_id
-      from susd_user su 
-      join reviewer re on re.susd_user_id=su.id
-      join snippet_validation sv on sv.reviewer_id = re.id  and sv.run_id=re.run_id
-      join dyad dy on dy.id = sv.dyad_id  and dy.run_id=sv.run_id
-      join publication pu on pu.id = dy.publication_id and pu.run_id=dy.run_id
-      join dataset_alias da on da.id = dy.dataset_alias_id and da.run_id = sv.run_id
-      left join dataset_alias da_parent on da.parent_alias_id = da_parent.alias_id  and da_parent.run_id = sv.run_id
-      join agency_run ar on ar.id=re.run_id
-      where su.id = @EntityID
-      and (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END)  <= @DoShowWReviewedItems
-      group by su.id`);
+      .input('DoShowWReviewedItems', Bit, do_show_reviewed_items)
+      .query(`SELECT 
+                COUNT(*) as items_number,
+                SUM(CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) as answered,
+                su.id as entity_id
+              from susd_user su 
+              join reviewer re on re.susd_user_id=su.id
+              join snippet_validation sv on sv.reviewer_id = re.id  and sv.run_id=re.run_id
+              join dyad dy on dy.id = sv.dyad_id  and dy.run_id=sv.run_id
+              join publication pu on pu.id = dy.publication_id and pu.run_id=dy.run_id
+              join dataset_alias da on da.id = dy.dataset_alias_id and da.run_id = sv.run_id
+              left join dataset_alias da_parent on da.parent_alias_id = da_parent.alias_id  and da_parent.run_id = sv.run_id
+              join agency_run ar on ar.id=re.run_id
+              where 
+                su.id = @EntityID and
+                (CASE WHEN sv.agency_dataset_identified is not null and sv.is_dataset_reference is not null THEN 1 ELSE 0 END) <= @DoShowWReviewedItems
+              group by su.id`);
     const count_result = {
       total: 0,
       answered: 0,
@@ -118,8 +115,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set is_dataset_reference = @Value, last_updated_date = GETDATE() 
-      where id = @ID`);
+      .query(`update snippet_validation set is_dataset_reference = @Value, last_updated_date = GETDATE() where id = @ID`);
     return result.rowsAffected;
   }
 
@@ -139,8 +135,7 @@ export class ReviewService {
       .request()
       .input('ID', BigInt, validation.dataset_mention_generic_metadata_id)
       .input('Value', BigInt, validation.value)
-      .query(`update snippet_validation set agency_dataset_identified = @Value, last_updated_date = GETDATE() 
-      where id = @ID`);
+      .query(`update snippet_validation set agency_dataset_identified = @Value, last_updated_date = GETDATE() where id = @ID`);
     return result.rowsAffected;
   }
 
@@ -164,14 +159,15 @@ export class ReviewService {
       .input('EntityID', BigInt, entity_id)
       .input('SourceID', BigInt, source_id)
       .input('EntityType', VarChar, entity_type)
-      .input('ValidationType', VarChar, validation_type).query(`SELECT 
-      validation_id, entity_id, source_id, entity_type, value
-      FROM validation v
-      WHERE 
-          v.source_id = @SourceID
-          and v.entity_id = @EntityID
-          and v.entity_type = @EntityType
-          and v.validation_type = @ValidationType`);
+      .input('ValidationType', VarChar, validation_type)
+      .query(`SELECT 
+                validation_id, entity_id, source_id, entity_type, value
+              FROM validation v
+              WHERE 
+                v.source_id = @SourceID
+                and v.entity_id = @EntityID
+                and v.entity_type = @EntityType
+                and v.validation_type = @ValidationType`);
     if (result.recordset && result.recordset.length > 0) {
       item = result.recordset[0];
     }
@@ -180,38 +176,38 @@ export class ReviewService {
 
   async deleteAssignments(source_id: number) {
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().input('SourceID', BigInt, source_id)
-      .query(`DELETE FROM generic_metadata WHERE 
-        metadata_name = 'text_snippet_to_review' and entity_id = @SourceID`);
+    const result = await pool
+      .request()
+      .input('SourceID', BigInt, source_id)
+      .query(`DELETE FROM generic_metadata 
+              WHERE metadata_name = 'text_snippet_to_review' and entity_id = @SourceID`);
     return result.rowsAffected;
   }
 
   async getReviewReport() {
     let items: ReviewReportItem[] = [];
     const pool = await this.databaseService.getConnection();
-    const result = await pool.request().query(`	select 
-    ms.source_id  as user_metadata_source_id, ms2.source_id as organization_source_id, ms.email, ms.organization_name,
-sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_items,
-   sum(case when gm.generic_metadata_id is not null and (v_alias.value is null or v_alias_parent.value is null) then 1 else 0 end) as not_answered
- from 
-   metadata_source ms
- join metadata_source ms2 on (ms2.organization_name = ms.organization_name and ms2.source_type = 'org')
- left join generic_metadata gm on ms.source_id = gm.entity_id and gm.metadata_name = 'text_snippet_to_review'-- added to see emails
- left join 
-   generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id --removed double casting  
- left join 
-   validation v_alias 
-   on gm2.generic_metadata_id = v_alias.entity_id 
-   and v_alias.entity_type = 'generic_metadata'
-   and v_alias.validation_type = 'text_snippet_dataset_alias'
- left join 
-   validation v_alias_parent 
-   on gm2.generic_metadata_id = v_alias_parent.entity_id 
-   and v_alias_parent.entity_type = 'generic_metadata'
-   and v_alias_parent.validation_type = 'dataset_alias_official_name'
- where 
-   ms.source_type = 'reviewer'
- GROUP BY ms.source_id ,  ms.email, ms.organization_name`);
+    const result = await pool.request().query(
+      `select 
+        ms.source_id as user_metadata_source_id, 
+        ms2.source_id as organization_source_id, 
+        ms.email, ms.organization_name,
+        sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_items,
+        sum(case when gm.generic_metadata_id is not null and (v_alias.value is null or v_alias_parent.value is null) then 1 else 0 end) as not_answered
+      from metadata_source ms
+      join metadata_source ms2 on (ms2.organization_name = ms.organization_name and ms2.source_type = 'org')
+      left join generic_metadata gm on ms.source_id = gm.entity_id and gm.metadata_name = 'text_snippet_to_review'-- added to see emails
+      left join generic_metadata gm2 on cast(gm.metadata as INT)  = gm2.generic_metadata_id --removed double casting  
+      left join validation v_alias 
+        on gm2.generic_metadata_id = v_alias.entity_id 
+        and v_alias.entity_type = 'generic_metadata'
+        and v_alias.validation_type = 'text_snippet_dataset_alias'
+      left join validation v_alias_parent 
+        on gm2.generic_metadata_id = v_alias_parent.entity_id 
+        and v_alias_parent.entity_type = 'generic_metadata'
+        and v_alias_parent.validation_type = 'dataset_alias_official_name'
+      where ms.source_type = 'reviewer'
+      GROUP BY ms.source_id, ms.email, ms.organization_name`);
     if (result.recordset && result.recordset.length > 0) {
       items = result.recordset as ReviewReportItem[];
     }
@@ -229,40 +225,36 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
       .input('SourceID', BigInt, source_id)
       .input('OrganizationSourceID', BigInt, organization_source_id)
       .input('OrganizationName', VarChar, organization_name)
-      .query(`INSERT INTO generic_metadata
-      (source_id, entity_id, entity_type, metadata_name, metadata, last_updated_date)
-      SELECT TOP 50
-        @OrganizationSourceID,
-        @SourceID, 
-        'metadata_source',
-        'text_snippet_to_review',
-        gm.generic_metadata_id,
-        getdate()
-      FROM
-        generic_metadata gm
-      left join
-        publication_dataset_alias pda on pda.publication_dataset_alias_id = gm.entity_id
-      LEFT JOIN
-        dataset_alias da on pda.alias_id = da.alias_id
-      LEFT JOIN 
-        generic_metadata gm2 on da.parent_alias_id = gm2.entity_id  and gm2.metadata_name = 'dataset_validation_group'
-      left JOIN
-        generic_metadata gm3 on gm3.metadata_name = 'text_snippet_to_review' and cast(gm3.metadata as INT)  = gm.generic_metadata_id
-      left join 
-            validation v_alias 
-            on gm.generic_metadata_id = v_alias.entity_id 
-            and v_alias.entity_type = 'generic_metadata'
-            and v_alias.validation_type = 'text_snippet_dataset_alias'
-      left join 
-            validation v_alias_parent 
-            on gm.generic_metadata_id = v_alias_parent.entity_id 
-            and v_alias_parent.entity_type = 'generic_metadata'
-            and v_alias_parent.validation_type = 'dataset_alias_official_name'
-      WHERE
-        gm.metadata_name = 'text_snippet'
-        and gm2.metadata = @OrganizationName 
-        and (v_alias.value is null or v_alias_parent.value is null)
-        and gm3.generic_metadata_id is null`);
+      .query(`INSERT INTO generic_metadata(source_id, entity_id, entity_type, metadata_name, metadata, last_updated_date)
+                SELECT TOP 50
+                  @OrganizationSourceID,
+                  @SourceID, 
+                  'metadata_source',
+                  'text_snippet_to_review',
+                  gm.generic_metadata_id,
+                  getdate()
+                FROM generic_metadata gm
+                LEFT JOIN publication_dataset_alias pda on pda.publication_dataset_alias_id = gm.entity_id
+                LEFT JOIN dataset_alias da on pda.alias_id = da.alias_id
+                LEFT JOIN generic_metadata gm2 
+                  on da.parent_alias_id = gm2.entity_id 
+                  and gm2.metadata_name = 'dataset_validation_group'
+                LEFT JOIN generic_metadata gm3 
+                  on gm3.metadata_name = 'text_snippet_to_review' 
+                  and cast(gm3.metadata as INT) = gm.generic_metadata_id
+                LEFT JOIN validation v_alias 
+                  on gm.generic_metadata_id = v_alias.entity_id 
+                  and v_alias.entity_type = 'generic_metadata'
+                  and v_alias.validation_type = 'text_snippet_dataset_alias'
+                LEFT JOIN validation v_alias_parent 
+                  on gm.generic_metadata_id = v_alias_parent.entity_id 
+                  and v_alias_parent.entity_type = 'generic_metadata'
+                  and v_alias_parent.validation_type = 'dataset_alias_official_name'
+                WHERE
+                  gm.metadata_name = 'text_snippet'
+                  and gm2.metadata = @OrganizationName 
+                  and (v_alias.value is null or v_alias_parent.value is null)
+                  and gm3.generic_metadata_id is null`);
     return result.rowsAffected;
   }
 
@@ -287,14 +279,19 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
       const sql_run_ids = run_ids.join(',');
 
       const result = await pool.request().query(`
-      WITH r AS 
-        (SELECT  
-          CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
-          d.run_id AS run_id
-        FROM dyad d LEFT JOIN snippet_validation sv ON (sv.dyad_id = d.id)
-        WHERE d.alias_id IS NOT NULL AND snippet IS NOT NULL
+        WITH r AS (
+          SELECT  
+            CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
+            d.run_id AS run_id
+          FROM dyad d 
+          LEFT JOIN snippet_validation sv ON (sv.dyad_id = d.id)
+          WHERE d.alias_id IS NOT NULL AND snippet IS NOT NULL
         )
-      SELECT run_id, SUM(revd) as n_revd, COUNT(*) AS n_tot, SUM(revd)/(COUNT(*)*1.0)*100 as pct_complete
+        SELECT 
+          run_id, 
+          SUM(revd) as n_revd, 
+          COUNT(*) AS n_tot, 
+          SUM(revd)/(COUNT(*)*1.0)*100 as pct_complete
         FROM r
         WHERE run_id IN (${sql_run_ids})
         GROUP BY run_id
@@ -306,15 +303,14 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
     return response;
   }
 
-  async getStatistics(
-    run_ids: number[],
-  ): Promise<{ [id: string]: ReviewStatisticsDto }> {
+  async getStatistics(run_ids: number[]): Promise<{ [id: string]: ReviewStatisticsDto }> {
     const response: { [id: string]: ReviewStatisticsDto } = {};
     if (run_ids.length) {
       const pool = await this.databaseService.getConnection();
       const sql_run_ids = run_ids.join(',');
 
-      const result = await pool.request().query(` WITH u AS (
+      const result = await pool.request().query(`
+        WITH u AS (
           SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
           UNION
           SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
@@ -330,10 +326,10 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
           SELECT run_id r, 'n_total_dyads' k, count(*) v FROM dyad_model GROUP BY run_id
           UNION
           SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
-      )
-      SELECT * FROM u
-      WHERE r IN (${sql_run_ids})
-      ORDER BY r, k;`);
+        )
+        SELECT * FROM u
+        WHERE r IN (${sql_run_ids})
+        ORDER BY r, k;`);
       if (result?.recordset.length) {
         result.recordset.forEach((rc) => {
           if (!(rc['r'] in response)) {
@@ -341,177 +337,6 @@ sum(case when gm.generic_metadata_id is not null then 1 else 0 end) as assigned_
           }
           response[rc['r']][rc['k']] = rc['v'];
         });
-      }
-    }
-    return response;
-  }
-
-  async getDatasetNamesAndAliases(
-    run_ids: number[],
-  ): Promise<DatasetNamesDto[]> {
-    let response: DatasetNamesDto[] = [];
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-      const result = await pool.request().query(`
-          select 
-            ds.alias as dataset, 
-            da.alias as alias, 
-            da.alias_type as alias_type
-          from dataset_alias da
-          join dataset_alias ds on da.parent_alias_id = ds.alias_id and ds.run_id=da.run_id
-          where da.run_id in (${sql_run_ids})
-          order by ds.alias, da.alias`);
-      if (result?.recordset.length) {
-        response = result.recordset;
-      }
-    }
-    return response;
-  }
-
-  async getDatasetStatistics(
-    run_ids: number[],
-  ): Promise<DatasetStatisticsDto[]> {
-    let response: DatasetStatisticsDto[] = [];
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-      const result = await pool.request().query(`
-          SELECT
-            all_datasets.dataset_title as dataset,
-            all_datasets.alias as alias,
-            all_datasets.alias_id as alias_id,
-            all_datasets.parent_alias_id as parent_alias_id,
-            agency_dataset_identified,
-            COUNT(*) as n_total
-          FROM snippet_validation
-          JOIN dyad ON dyad_id = dyad.id
-          JOIN dataset_alias ON dataset_alias.alias_id = dyad.alias_id
-          JOIN all_datasets ON dataset_alias.alias_id = all_datasets.alias_id
-          WHERE dyad.alias_id IS NOT NULL AND dyad.run_id in (${sql_run_ids})
-          GROUP BY agency_dataset_identified, dyad.alias_id, agency_dataset_identified, all_datasets.alias, all_datasets.alias_id, all_datasets.parent_alias_id, all_datasets.dataset_title 
-          ORDER BY all_datasets.alias_id`);
-      if (result?.recordset.length) {
-        result.recordset.forEach((rc) => {
-          rc['alias_id'] = parseInt(rc['alias_id']);
-          rc['parent_alias_id'] = parseInt(rc['parent_alias_id']);
-        });
-        response = result.recordset;
-      }
-    }
-    return response;
-  }
-
-  async getMachineLearningModelStatistics(
-    run_ids: number[],
-  ): Promise<MLModelStatisticsDto[]> {
-    let response: MLModelStatisticsDto[] = [];
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-
-      const publications_and_topics_per_dataset = await pool.request().query(`
-          select 
-            ds.alias as dataset,
-            count(distinct d.publication_id) as n_publications,
-            count(distinct pt.topic_id) as n_topics
-          from dyad d 
-          join dataset_alias da on da.id=d.dataset_alias_id
-          join dataset_alias ds on da.parent_alias_id=ds.alias_id and da.run_id=ds.run_id
-          join publication_topic pt on pt.publication_id=d.publication_id  
-          where d.run_id in (${sql_run_ids})
-          group by ds.id, ds.alias
-          order by ds.alias`);
-
-      const topic_occurences_per_dataset = await pool.request().query(`
-          with t as (
-            select 
-              ds.alias as dataset, 
-              t.keywords as topic,
-              -- rank() over (partition by ds.alias order by count(*) desc) as n_rank,
-              count(*) as n_occurrences
-            from dyad d 
-            join dataset_alias da on da.id=d.dataset_alias_id
-            join dataset_alias ds on da.parent_alias_id=ds.alias_id and da.run_id=ds.run_id
-            join publication_topic pt on pt.publication_id=d.publication_id  
-            join topic t on t.id=pt.topic_id
-            where d.run_id in (${sql_run_ids})
-            group by ds.alias, t.keywords
-          ) 
-          select dataset, topic, n_occurrences
-          from t 
-          order by dataset, n_occurrences desc`);
-
-      if (publications_and_topics_per_dataset?.recordset.length) {
-        response = publications_and_topics_per_dataset.recordset;
-        const topics_per_dataset = {};
-        response.forEach((r) => {
-          topics_per_dataset[r['dataset']] = [] as TopicOccurencesDto[];
-        });
-
-        topic_occurences_per_dataset.recordset.forEach((t) => {
-          const topic = {
-            topic: t['topic'],
-            n_occurrences: t['n_occurrences'],
-          } as TopicOccurencesDto;
-          topics_per_dataset[t['dataset']].push(topic);
-        });
-
-        response.forEach((r) => {
-          r['topics'] = topics_per_dataset[r['dataset']];
-        });
-      }
-    }
-    return response;
-  }
-
-  async getTotalPublicationsPerTopic(
-    run_ids: number[],
-  ): Promise<PublicationsPerTopicDto[]> {
-    let response: PublicationsPerTopicDto[] = [];
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-      const result = await pool.request().query(`
-          select 
-            t.keywords as topic, 
-            count(distinct pt.publication_id) as n_publications
-          from topic t
-          join publication_topic pt on pt.topic_id=t.id
-          where t.run_id IN (${sql_run_ids})
-          group by t.keywords
-          order by n_publications desc`);
-      if (result?.recordset.length) {
-        response = result.recordset;
-      }
-    }
-    return response;
-  }
-
-  async getReviewers(run_ids: number[]): Promise<ReviewersDto[]> {
-    let response: ReviewersDto[] = [];
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-      const result = await pool.request().query(`
-          SELECT
-            susd_user_id,
-            first_name,
-            last_name,
-            roles,
-            agency_dataset_identified,
-            COUNT(*) as n_total
-          FROM reviewer
-          JOIN susd_user ON susd_user_id = susd_user.id
-          JOIN snippet_validation ON reviewer_id = reviewer.id
-          WHERE reviewer.run_id IN (${sql_run_ids})
-          GROUP BY susd_user_id, first_name, last_name, agency_dataset_identified, roles`);
-      if (result?.recordset.length) {
-        result.recordset.forEach((rc) => {
-          rc['susd_user_id'] = parseInt(rc['susd_user_id']);
-          rc['roles'] = JSON.parse(rc['roles']);
-        });
-        response = result.recordset;
       }
     }
     return response;

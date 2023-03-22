@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { VarChar, Int } from 'mssql';
+import { DatabaseService } from '../database/database.service';
 import { Role } from '../auth/role.enum';
-import { DatabaseService } from 'src/database/database.service';
 import { User } from './user.interface';
-
-// This should be a real class/interface representing a user entity
 
 /**
  * Description placeholder
@@ -37,8 +35,14 @@ export class UsersService {
       privileges: [
         {
           run_id: 1,
+          agency: 'NASA',
           roles: [Role.ADMIN],
         },
+        //{
+        //  run_id: 2,
+        //  agency: 'USDA',
+        //  roles: [Role.REVIEWER],
+        //},
       ],
     },
     // {
@@ -76,29 +80,30 @@ export class UsersService {
       .input('Email', VarChar, email)
       .input('Password', VarChar, password)
       .query(`SELECT id, first_name, last_name, email
-        FROM susd_user WHERE email = @Email
-        AND password = HASHBYTES('SHA2_256', @Password)`);
+              FROM susd_user WHERE email = @Email
+              AND password = HASHBYTES('SHA2_256', @Password)`);
     const userArray: User[] = result.recordset;
     if (userArray?.length) {
       user = userArray[0] as User;
       const roles = await pool
         .request()
         .input('SUSD_USER_ID', Int, user.id)
-        .query(
-          'SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID',
-        );
+        .query('SELECT r.run_id, ar.agency, r.roles FROM reviewer r join agency_run ar on r.run_id = ar.id  where r.susd_user_id = @SUSD_USER_ID');
       const privileges = roles.recordset;
       if (privileges?.length) {
         privileges.forEach((element) => {
           element['roles'] = JSON.parse(element['roles']);
-          element['roles'].forEach((e) => {
-            Role[e];
-          });
         });
         user['privileges'] = privileges;
       }
     }
+    return user;
+  }
 
+  async getUserInfo(requestUser: User): Promise<User> {
+    let user: User = JSON.parse(JSON.stringify(requestUser));
+    delete user['iat']; // remove jwt field
+    delete user['exp']; // remove jwt field
     return user;
   }
 }

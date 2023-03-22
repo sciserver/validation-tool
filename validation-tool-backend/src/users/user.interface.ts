@@ -2,6 +2,7 @@ import { Role } from '../auth/role.enum';
 
 export interface Privileges {
   run_id: number;
+  agency: string;
   roles: Role[];
 }
 

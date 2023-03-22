@@ -7,14 +7,15 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { User } from 'src/users/user.interface';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from '../users/user.interface';
 import { ValidationGenericMetadataDto } from './review.interface';
 import { ReviewService } from './review.service';
 
 @Controller('review')
 export class ReviewController {
   constructor(private reviewService: ReviewService) {}
+  
   @Get()
   @UseGuards(JwtAuthGuard)
   async getReviewItens(
@@ -101,55 +102,6 @@ export class ReviewController {
     const user: any = req.user;
     const run_ids = user?.privileges.map((x) => x.run_id);
     const result = await this.reviewService.getStatistics(run_ids);
-    return result;
-  }
-
-  @Get('/datasets') // Query: Dataset Names and Aliases
-  @UseGuards(JwtAuthGuard)
-  async getDatasetNamesAndAliases(@Req() req) {
-    const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getDatasetNamesAndAliases(run_ids);
-    return result;
-  }
-
-  @Get('/datasets/statistics') // Query: Dataset Reviews Statistics
-  @UseGuards(JwtAuthGuard)
-  async getDatasetStatistics(@Req() req) {
-    const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getDatasetStatistics(run_ids);
-    return result;
-  }
-
-  @Get('/datasets/ml_models/statistics') // Query: ML Models statistics
-  @UseGuards(JwtAuthGuard)
-  async getMachineLearningModelStatistics(@Req() req) {
-    const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getMachineLearningModelStatistics(
-      run_ids,
-    );
-    return result;
-  }
-
-  @Get('/topics/publication_count') // Query: Num Publications per Topic
-  @UseGuards(JwtAuthGuard)
-  async getTotalPublicationsPerTopic(@Req() req) {
-    const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getTotalPublicationsPerTopic(
-      run_ids,
-    );
-    return result;
-  }
-
-  @Get('/reviewers') // Query: Reviewers & Admins
-  @UseGuards(JwtAuthGuard)
-  async getReviewers(@Req() req) {
-    const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getReviewers(run_ids);
     return result;
   }
 }
