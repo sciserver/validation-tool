@@ -26,13 +26,13 @@ export class ReviewService {
       .input('Fetch', Int, page_size)
       .input('Offset', Int, page_number * page_size)
       .input('DoShowWReviewedItems', Bit, do_show_reviewed_items).query(`SELECT 
-      su.id as user_metadata_source_id,
+      @EntityID as user_metadata_source_id,
       sv.id as dataset_mention_generic_metadata_id,
       dy.snippet as dataset_mention,
       dy.id as publication_dataset_alias_id,
-      dy.publication_id as publication_id, 
+      dy.publication_id as publication_id,
       pu.title as publication_title,
-      pu.year as publication_year, 
+      pu.year as publication_year,
       pu.doi as publication_doi,
       dy.mention_candidate as alias_candidate,
       da.url as dataset_mention_alias_url,
@@ -43,20 +43,17 @@ export class ReviewService {
       sv.is_dataset_reference as dataset_correct,
       sv.agency_dataset_identified as alias_correct,
       da.alias as dataset_alias
-      FROM susd_user su 
-      JOIN reviewer re ON re.susd_user_id=su.id
+      FROM reviewer re
       JOIN snippet_validation sv ON sv.reviewer_id = re.id  and sv.run_id=re.run_id
       JOIN dyad dy ON dy.id = sv.dyad_id AND dy.run_id=sv.run_id
       JOIN publication pu ON pu.id = dy.publication_id AND pu.run_id=dy.run_id
-      LEFT JOIN dataset_alias da ON da.id = dy.dataset_alias_id AND da.run_id = sv.run_id
-      LEFT JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
+      JOIN dataset_alias da ON da.id = dy.dataset_alias_id AND da.run_id = sv.run_id
+      JOIN dataset_alias da_parent ON da.parent_alias_id = da_parent.alias_id AND da_parent.run_id = sv.run_id
       JOIN agency_run ar ON ar.id=re.run_id
-      WHERE su.id = @EntityID
-      and dy.snippet is not null 
-      and dy.mention_candidate is not null 
-      and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
+      WHERE re.susd_user_id = @EntityID
+        and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
       ORDER BY dy.id
-      OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
+        OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
     if (result.recordset && result.recordset.length > 0) {
       items = result.recordset as ReviewItem[];
     }
