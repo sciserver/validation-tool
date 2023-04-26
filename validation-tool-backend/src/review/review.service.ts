@@ -12,7 +12,7 @@ import {
 
 @Injectable()
 export class ReviewService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService) { }
 
   async getReviewItems(
     source_id: number,
@@ -272,13 +272,10 @@ export class ReviewService {
     }
   }
 
-  async getProgress(run_ids: number[]): Promise<ReviewProgressDto[]> {
+  async getProgress(run_id: number): Promise<ReviewProgressDto[]> {
     let response: ReviewProgressDto[] = undefined;
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
-
-      const result = await pool.request().query(`
+    const pool = await this.databaseService.getConnection();
+    const result = await pool.request().query(`
         WITH r AS (
           SELECT  
             CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
@@ -293,23 +290,21 @@ export class ReviewService {
           COUNT(*) AS n_tot, 
           SUM(revd)/(COUNT(*)*1.0)*100 as pct_complete
         FROM r
-        WHERE run_id IN (${sql_run_ids})
+        WHERE run_id = ${run_id}
         GROUP BY run_id
         ORDER BY run_id;`);
-      if (result?.recordset.length) {
-        response = result.recordset;
-      }
+    if (result?.recordset.length) {
+
+      [response] = result.recordset;
     }
     return response;
   }
 
-  async getStatistics(run_ids: number[]): Promise<{ [id: string]: ReviewStatisticsDto }> {
+  async getStatistics(run_id: number): Promise<{ [id: string]: ReviewStatisticsDto }> {
     const response: { [id: string]: ReviewStatisticsDto } = {};
-    if (run_ids.length) {
-      const pool = await this.databaseService.getConnection();
-      const sql_run_ids = run_ids.join(',');
+    const pool = await this.databaseService.getConnection();
 
-      const result = await pool.request().query(`
+    const result = await pool.request().query(`
         WITH u AS (
           SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
           UNION
@@ -328,16 +323,12 @@ export class ReviewService {
           SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
         )
         SELECT * FROM u
-        WHERE r IN (${sql_run_ids})
+        WHERE r = ${run_id}
         ORDER BY r, k;`);
-      if (result?.recordset.length) {
-        result.recordset.forEach((rc) => {
-          if (!(rc['r'] in response)) {
-            response[rc['r']] = {} as ReviewStatisticsDto;
-          }
-          response[rc['r']][rc['k']] = rc['v'];
-        });
-      }
+    if (result?.recordset.length) {
+      result.recordset.forEach((rc) => {
+        response[rc['k']] = rc['v'];
+      });
     }
     return response;
   }

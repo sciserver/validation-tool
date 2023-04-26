@@ -2,11 +2,14 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Req,
+  Response,
   UseGuards,
 } from '@nestjs/common';
+import { response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { User } from '../users/user.interface';
 import { ValidationGenericMetadataDto } from './review.interface';
@@ -14,8 +17,8 @@ import { ReviewService } from './review.service';
 
 @Controller('review')
 export class ReviewController {
-  constructor(private reviewService: ReviewService) {}
-  
+  constructor(private reviewService: ReviewService) { }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async getReviewItens(
@@ -85,23 +88,27 @@ export class ReviewController {
     return true;
   }
 
-  @Get('/progress')
+  @Get('/progress/:run_id')
   @UseGuards(JwtAuthGuard)
-  async getReviewProgress(@Req() req) {
+  async getReviewProgress(@Param('run_id') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges
-      .filter((p) => p.roles.includes('ADMIN'))
-      .map((x) => x.run_id);
-    const result = await this.reviewService.getProgress(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.reviewService.getProgress(Number.parseInt(runId));
+    }
+    return { status: 403 }
   }
 
-  @Get('/statistics')
+  @Get('/statistics/:run_id')
   @UseGuards(JwtAuthGuard)
-  async getStatistics(@Req() req) {
+  async getStatistics(@Param('run_id') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getStatistics(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.reviewService.getStatistics(Number.parseInt(runId));
+    }
+    throw new Error("User doesn't have access to this data");
   }
 }

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Param,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,50 +14,65 @@ import { AdminService } from './admin.service';
 @Controller(['admin', 'admin/dashboard'])
 @Roles(Role.ADMIN, Role.SYSADMIN)
 export class AdminController {
-  constructor(private adminService: AdminService) {}
-  
-  @Get('/datasets') // Query: Dataset Names and Aliases
+  constructor(private adminService: AdminService) { }
+
+  @Get('/datasets/:runId') // Query: Dataset Names and Aliases
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async getDatasetNamesAndAliases(@Req() req) {
+  async getDatasetNamesAndAliases(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.adminService.getDatasetNamesAndAliases(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    console.log(agencyPrivilege);
+
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getDatasetNamesAndAliases(runId);
+    }
+    throw new Error("User doesn't have access to this data");
   }
 
-  @Get('/datasets/statistics') // Query: Dataset Reviews Statistics
+  @Get('/datasets/statistics/:runId') // Query: Dataset Reviews Statistics
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async getDatasetStatistics(@Req() req) {
+  async getDatasetStatistics(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.adminService.getDatasetStatistics(run_ids);
-    return result;
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getDatasetStatistics(Number.parseInt(runId));
+    }
+    throw new Error("User doesn't have access to this data");
   }
 
-  @Get('/datasets/ml_models/statistics') // Query: ML Models statistics
+  @Get('/datasets/ml_models/statistics/:runId') // Query: ML Models statistics
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async getMachineLearningModelStatistics(@Req() req) {
+  async getMachineLearningModelStatistics(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.adminService.getMachineLearningModelStatistics(run_ids);
-    return result;
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getMachineLearningModelStatistics(runId);
+    }
+    throw new Error("User doesn't have access to this data");
   }
 
-  @Get('/topics/publication_count') // Query: Num Publications per Topic
+  @Get('/topics/publication_count/:runId') // Query: Num Publications per Topic
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async getTotalPublicationsPerTopic(@Req() req) {
+  async getTotalPublicationsPerTopic(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.adminService.getTotalPublicationsPerTopic(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getTotalPublicationsPerTopic(runId);
+    }
+    throw new Error("User doesn't have access to this data");
   }
 
-  @Get('/reviewers') // Query: Reviewers & Admins
+  @Get('/reviewers/:runId') // Query: Reviewers & Admins
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async getReviewers(@Req() req) {
+  async getReviewers(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.adminService.getReviewers(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getReviewers(Number.parseInt(runId));
+    }
+    throw new Error("User doesn't have access to this data");
   }
 }

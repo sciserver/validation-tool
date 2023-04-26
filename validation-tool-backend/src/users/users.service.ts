@@ -14,7 +14,7 @@ import { User } from './user.interface';
  */
 @Injectable()
 export class UsersService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService) { }
 
   /**
    * Description placeholder
@@ -89,7 +89,21 @@ export class UsersService {
         .request()
         .input('SUSD_USER_ID', Int, user.id)
         .query('SELECT r.run_id, ar.agency, r.roles FROM reviewer r join agency_run ar on r.run_id = ar.id  where r.susd_user_id = @SUSD_USER_ID');
+      // .query(`SELECT p.agency as project_agency,
+      //         ar.agency,
+      //         ar.id as run_id, 
+      //         pm.roles
+      //         FROM project p
+      //         JOIN project_member pm on pm.project_id=p.id
+      //         JOIN susd_user su on su.id=pm.susd_user_id 
+      //         JOIN project_run pr on pr.project_id=p.id
+      //         JOIN agency_run ar on ar.id = pr.run_id
+      //         AND su.id = @SUSD_USER_ID
+      //         AND exists (select r.id from reviewer r where r.run_id = pr.run_id)
+      //         ORDER BY p.agency, p.id
+      //     `);
       const privileges = roles.recordset;
+
       if (privileges?.length) {
         privileges.forEach((element) => {
           element['roles'] = JSON.parse(element['roles']);

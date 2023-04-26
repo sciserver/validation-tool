@@ -11,6 +11,7 @@ async function bootstrap() {
     },
   });
 
+  app.setGlobalPrefix('/julianas-sciserver/validation-tool-backend');
   await app.listen(process.env.NODE_PORT || 3000);
 }
 bootstrap();
