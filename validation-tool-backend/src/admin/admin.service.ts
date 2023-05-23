@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { BigInt, Int, Bit, VarChar } from 'mssql';
 import { DatabaseService } from '../database/database.service';
 import {
   DatasetNamesDto,
@@ -56,11 +55,8 @@ export class AdminService {
           GROUP BY sv.agency_dataset_identified, da.alias, da.alias_id, da.parent_alias_id, ds.alias 
           ORDER BY ds.alias, da.alias
     `);
+
     if (result?.recordset.length) {
-      result.recordset.forEach((rc) => {
-        rc['alias_id'] = parseInt(rc['alias_id']);
-        rc['parent_alias_id'] = parseInt(rc['parent_alias_id']);
-      });
       response = result.recordset;
     }
     return response;
