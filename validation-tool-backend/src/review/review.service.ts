@@ -276,23 +276,28 @@ export class ReviewService {
     let response: ReviewProgressDto[] = undefined;
     const pool = await this.databaseService.getConnection();
     const result = await pool.request().query(`
-        WITH r AS (
-          SELECT  
-            CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
-            d.run_id AS run_id
-          FROM dyad d 
-          LEFT JOIN snippet_validation sv ON (sv.dyad_id = d.id)
-          WHERE d.alias_id IS NOT NULL AND snippet IS NOT NULL
-        )
-        SELECT 
-          run_id, 
-          SUM(revd) as n_revd, 
-          COUNT(*) AS n_tot, 
-          SUM(revd)/(COUNT(*)*1.0)*100 as pct_complete
-        FROM r
-        WHERE run_id = ${run_id}
-        GROUP BY run_id
-        ORDER BY run_id;`);
+      WITH r AS (
+        SELECT  
+          CASE WHEN d.snippet IS NOT NULL AND d.dataset_alias_id IS NOT NULL THEN 1 ELSE 0 END AS assignable, 
+          CASE WHEN is_dataset_reference IS NOT NULL AND agency_dataset_identified IS NOT NULL THEN 1 ELSE 0 END AS revd, 
+          CASE WHEN sv.id is not null THEN 1 ELSE 0 END AS assigned, 
+          d.run_id AS run_id
+        FROM dyad d 
+        LEFT JOIN snippet_validation sv ON (sv.dyad_id = d.id)
+      -- WHERE d.alias_id IS NOT NULL AND snippet IS NOT NULL
+      )
+      SELECT 
+        run_id, 
+        COUNT(*) AS n_tot,  -- n_mentions 
+    sum(assignable) as n_assignable,
+        SUM(assigned) as n_assigned, 
+        SUM(revd) as n_revd, 
+        SUM(revd)/(sum(assignable)*1.0)*100 as pct_complete
+      FROM r
+      WHERE run_id = ${run_id}
+      GROUP BY run_id
+      ORDER BY run_id;
+    `);
     if (result?.recordset.length) {
 
       [response] = result.recordset;
@@ -305,26 +310,27 @@ export class ReviewService {
     const pool = await this.databaseService.getConnection();
 
     const result = await pool.request().query(`
-        WITH u AS (
-          SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
-          UNION
-          SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
-          UNION
-          SELECT d.run_id r, 'n_datasets' k, count(distinct(da.parent_alias_id)) v FROM dyad d JOIN dataset_alias da ON d.alias_id = da.alias_id GROUP BY d.run_id
-          UNION
-          SELECT run_id r, 'n_dyads' k, sum(n) FROM (SELECT run_id, 1 n FROM dyad GROUP BY run_id, publication_id, mention_candidate) x GROUP BY run_id
-          UNION
-          SELECT run_id r, 'n_snippets_total' k, count(*) v FROM dyad GROUP BY run_id
-          UNION
-          SELECT run_id r, 'n_snippets_nonempty' k, count(*) v FROM dyad WHERE snippet IS NOT NULL AND snippet != '' GROUP BY run_id
-          UNION
-          SELECT run_id r, 'n_total_dyads' k, count(*) v FROM dyad_model GROUP BY run_id
-          UNION
-          SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
-        )
-        SELECT * FROM u
-        WHERE r = ${run_id}
-        ORDER BY r, k;`);
+      WITH u AS (
+        SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
+        UNION
+        SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
+        UNION
+        SELECT d.run_id r, 'n_datasets' k, count(distinct(da.parent_alias_id)) v FROM dyad d JOIN dataset_alias da ON d.dataset_alias_id = da.id GROUP BY d.run_id
+        UNION
+        SELECT run_id r, 'n_dyads' k, sum(n) FROM (SELECT run_id, 1 n FROM dyad GROUP BY run_id, publication_id, mention_candidate) x GROUP BY run_id
+        UNION
+        SELECT run_id r, 'n_snippets_total' k, count(*) v FROM dyad GROUP BY run_id
+        UNION
+        SELECT run_id r, 'n_snippets_nonempty' k, count(*) v FROM dyad WHERE snippet IS NOT NULL AND snippet != '' GROUP BY run_id
+        UNION
+        SELECT run_id r, 'n_total_dyads' k, count(*) v FROM dyad_model GROUP BY run_id
+        UNION
+        SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
+      )
+      SELECT * FROM u
+      WHERE r = ${run_id}
+      ORDER BY r;
+    `);
     if (result?.recordset.length) {
       result.recordset.forEach((rc) => {
         response[rc['k']] = rc['v'];
