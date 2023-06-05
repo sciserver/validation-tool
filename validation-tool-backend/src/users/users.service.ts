@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { VarChar, Int } from 'mssql';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
+import { Role } from '../auth/role.enum';
 import { User } from './user.interface';
-
-// This should be a real class/interface representing a user entity
 
 /**
  * Description placeholder
@@ -15,7 +14,7 @@ import { User } from './user.interface';
  */
 @Injectable()
 export class UsersService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService) { }
 
   /**
    * Description placeholder
@@ -33,6 +32,18 @@ export class UsersService {
       first_name: 'john',
       email: 'john@test.com',
       password: 'changeme',
+      privileges: [
+        {
+          run_id: 1,
+          agency: 'NASA',
+          roles: [Role.ADMIN],
+        },
+        //{
+        //  run_id: 2,
+        //  agency: 'USDA',
+        //  roles: [Role.REVIEWER],
+        //},
+      ],
     },
     // {
     //   userId: 2,
@@ -69,23 +80,45 @@ export class UsersService {
       .input('Email', VarChar, email)
       .input('Password', VarChar, password)
       .query(`SELECT id, first_name, last_name, email
-        FROM susd_user WHERE email = @Email
-        AND password = HASHBYTES('SHA2_256', @Password)`);
+              FROM susd_user WHERE email = @Email
+              AND password = HASHBYTES('SHA2_256', @Password)`);
     const userArray: User[] = result.recordset;
     if (userArray?.length) {
       user = userArray[0] as User;
-      const roles = await pool.request()
+      const roles = await pool
+        .request()
         .input('SUSD_USER_ID', Int, user.id)
-        .query('SELECT run_id, roles FROM reviewer where susd_user_id = @SUSD_USER_ID');
+        // .query('SELECT r.run_id, ar.agency, r.roles FROM reviewer r join agency_run ar on r.run_id = ar.id  where r.susd_user_id = @SUSD_USER_ID');
+        .query(`SELECT p.agency as project_agency,
+                ar.version,
+                ar.agency,
+                ar.id as run_id, 
+                pm.roles
+                FROM project p
+                JOIN project_member pm on pm.project_id=p.id
+                JOIN susd_user su on su.id=pm.susd_user_id 
+                JOIN project_run pr on pr.project_id=p.id
+                JOIN agency_run ar on ar.id = pr.run_id
+                AND su.id = @SUSD_USER_ID
+                AND exists (select r.id from reviewer r where r.run_id = pr.run_id)
+                ORDER BY p.agency, p.id
+            `);
       const privileges = roles.recordset;
+
       if (privileges?.length) {
-        privileges.forEach(element => {
-          element['roles'] = JSON.parse(element['roles'])
+        privileges.forEach((element) => {
+          element['roles'] = JSON.parse(element['roles']);
         });
         user['privileges'] = privileges;
       }
     }
+    return user;
+  }
 
+  async getUserInfo(requestUser: User): Promise<User> {
+    let user: User = JSON.parse(JSON.stringify(requestUser));
+    delete user['iat']; // remove jwt field
+    delete user['exp']; // remove jwt field
     return user;
   }
 }

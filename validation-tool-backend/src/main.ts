@@ -11,6 +11,7 @@ async function bootstrap() {
     },
   });
 
+  app.setGlobalPrefix('/democratizing-data/api');
   await app.listen(process.env.NODE_PORT || 3000);
 }
 bootstrap();

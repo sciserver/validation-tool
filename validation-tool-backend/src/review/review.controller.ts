@@ -2,19 +2,23 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Req,
+  Response,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { User } from 'src/users/user.interface';
+import { response } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from '../users/user.interface';
 import { ValidationGenericMetadataDto } from './review.interface';
 import { ReviewService } from './review.service';
 
 @Controller('review')
 export class ReviewController {
-  constructor(private reviewService: ReviewService) {}
+  constructor(private reviewService: ReviewService) { }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async getReviewItens(
@@ -30,11 +34,16 @@ export class ReviewController {
       page_number = 0;
     }
     const user: User = req.user;
+    if (do_show_reviewed_items == '1') {
+      do_show_reviewed_items = true;
+    } else {
+      do_show_reviewed_items = false;
+    }
     return await this.reviewService.getReviewItems(
       user.id,
       page_size,
       page_number,
-      do_show_reviewed_items
+      do_show_reviewed_items,
     );
   }
 
@@ -42,10 +51,18 @@ export class ReviewController {
   @UseGuards(JwtAuthGuard)
   async getReviewItensCount(
     @Req() req,
-    @Query('do_show_reviewed_items') do_show_reviewed_items
-    ) {
+    @Query('do_show_reviewed_items') do_show_reviewed_items,
+  ) {
     const user: User = req.user;
-    const result = await this.reviewService.getReviewItensCount(user.id, do_show_reviewed_items);
+    if (do_show_reviewed_items == '1') {
+      do_show_reviewed_items = true;
+    } else {
+      do_show_reviewed_items = false;
+    }
+    const result = await this.reviewService.getReviewItensCount(
+      user.id,
+      do_show_reviewed_items,
+    );
     return result;
   }
 
@@ -67,34 +84,31 @@ export class ReviewController {
     @Body() body: ValidationGenericMetadataDto,
   ) {
     const user: User = req.user;
-    await this.reviewService.reviewDatasetMentionParentAlias(
-      user.id,
-      body,
-    );
+    await this.reviewService.reviewDatasetMentionParentAlias(user.id, body);
     return true;
   }
 
-  @Get('/progress')
+  @Get('/progress/:run_id')
   @UseGuards(JwtAuthGuard)
-  async getReviewProgress(
-    @Req() req
-    ) {
+  async getReviewProgress(@Param('run_id') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges
-        .filter((p) => p.roles.includes("ADMIN"))
-        .map((x) => x.run_id);
-    const result = await this.reviewService.getProgress(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.reviewService.getProgress(Number.parseInt(runId));
+    }
+    return { status: 403 }
   }
 
-  @Get('/statistics')
+  @Get('/statistics/:run_id')
   @UseGuards(JwtAuthGuard)
-  async getStatistics(
-    @Req() req
-    ) {
+  async getStatistics(@Param('run_id') runId, @Req() req) {
     const user: any = req.user;
-    const run_ids = user?.privileges.map((x) => x.run_id);
-    const result = await this.reviewService.getStatistics(run_ids);
-    return result;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.reviewService.getStatistics(Number.parseInt(runId));
+    }
+    throw new Error("User doesn't have access to this data");
   }
 }
