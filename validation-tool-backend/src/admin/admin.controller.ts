@@ -16,13 +16,25 @@ import { AdminService } from './admin.service';
 export class AdminController {
   constructor(private adminService: AdminService) { }
 
+  @Get('/stepper/:runId') // Query: Dataset Names and Aliases
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getStepperData(@Param('runId') runId, @Req() req) {
+    const user: any = req.user;
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getStepperData(runId);
+    }
+
+    throw new Error("User doesn't have access to this data");
+  }
+
   @Get('/datasets/:runId') // Query: Dataset Names and Aliases
   @UseGuards(JwtAuthGuard, RolesGuard)
   async getDatasetNamesAndAliases(@Param('runId') runId, @Req() req) {
     const user: any = req.user;
 
     const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
-    console.log(agencyPrivilege);
 
     if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
       return await this.adminService.getDatasetNamesAndAliases(runId);
