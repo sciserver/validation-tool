@@ -13,6 +13,23 @@ import {
 export class AdminService {
   constructor(private databaseService: DatabaseService) { }
 
+  async getStepperData(
+    run_id: number,
+  ) {
+    let response = [];
+    const pool = await this.databaseService.getConnection();
+    const result = await pool.request().query(`
+      select ps.step_type, ps.start_date, ps.end_date
+      from project_run pr
+      join project_step ps on ps.run_definition_id=pr.run_definition_id
+      where pr.run_id=${run_id}
+    `);
+    if (result?.recordset.length) {
+      response = result.recordset;
+    }
+    return response;
+  }
+
   async getDatasetNamesAndAliases(
     run_id: number,
   ): Promise<DatasetNamesDto[]> {
