@@ -183,4 +183,20 @@ export class AdminService {
     }
     return response;
   }
+
+  async getOutputData(run_id: number) {
+    let response = {};
+    const pool = await this.databaseService.getConnection();
+    const result = await pool.request().query(`select * from dbo.togo2tacc(${run_id})`);
+
+    if (result?.recordset.length) {
+      result.recordset.forEach((rc) => {
+        const key = rc['which'];
+        const value = rc['num'];
+        response[key] = value;
+      });
+
+    }
+    return response;
+  }
 }

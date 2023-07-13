@@ -87,4 +87,16 @@ export class AdminController {
     }
     throw new Error("User doesn't have access to this data");
   }
+
+  @Get('/output/:runId') // Query: Output data
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getOutputData(@Param('runId') runId, @Req() req) {
+    const user: any = req.user;
+
+    const agencyPrivilege = (user?.privileges as { run_id: string, roles: string[] }[]).find(p => p.run_id === runId);
+    if (agencyPrivilege && agencyPrivilege.roles.includes('ADMIN')) {
+      return await this.adminService.getOutputData(Number.parseInt(runId));
+    }
+    throw new Error("User doesn't have access to this data");
+  }
 }
