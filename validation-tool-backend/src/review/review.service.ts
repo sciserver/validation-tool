@@ -310,26 +310,26 @@ export class ReviewService {
     const pool = await this.databaseService.getConnection();
 
     const result = await pool.request().query(`
-      WITH u AS (
-        SELECT run_id r, 'n_mention_candidates' k, count(distinct(mention_candidate)) v FROM dyad GROUP BY run_id
-        UNION
-        SELECT run_id r, 'n_publications' k, count(distinct(external_id)) v FROM publication GROUP BY run_id
-        UNION
-        SELECT d.run_id r, 'n_datasets' k, count(distinct(da.parent_alias_id)) v FROM dyad d JOIN dataset_alias da ON d.dataset_alias_id = da.id GROUP BY d.run_id
-        UNION
-        SELECT run_id r, 'n_dyads' k, sum(n) FROM (SELECT run_id, 1 n FROM dyad GROUP BY run_id, publication_id, mention_candidate) x GROUP BY run_id
-        UNION
-        SELECT run_id r, 'n_snippets_total' k, count(*) v FROM dyad GROUP BY run_id
-        UNION
-        SELECT run_id r, 'n_snippets_nonempty' k, count(*) v FROM dyad WHERE snippet IS NOT NULL AND snippet != '' GROUP BY run_id
-        UNION
-        SELECT run_id r, 'n_total_dyads' k, count(*) v FROM dyad_model GROUP BY run_id
-        UNION
-        SELECT run_id r, 'n_undetected_datasets' k, count(*) v FROM dyad WHERE alias_id IS NULL GROUP BY run_id
-      )
-      SELECT * FROM u
-      WHERE r = ${run_id}
-      ORDER BY r;
+    declare @run_id bigint = ${run_id}
+    declare @refmatch_id bigint
+    select @refmatch_id=id from model where name='refmatch'
+    ;
+    with valid_datasets as (
+    SELECT  da.parent_alias_id 
+      FROM snippet_validation sv 
+      join dyad d on d.id=sv.dyad_id
+      JOIN dataset_alias da ON d.dataset_alias_id = da.id  
+     where sv.run_id = @run_id and sv.agency_dataset_identified = 1
+    union
+    SELECT da.parent_alias_id 
+      FROM dyad_model dm 
+      join dyad d on d.id=dm.dyad_id
+      JOIN dataset_alias da ON d.dataset_alias_id = da.id and d.run_id = @run_id
+     where dm.model_id=@refmatch_id
+    )
+    SELECT 'n_datasets' k, count(distinct parent_alias_id) v FROM valid_datasets
+    UNION
+    SELECT 'n_refmatch' k, count(distinct dm.dyad_id) v FROM dyad_model dm where dm.model_id=@refmatch_id and run_id=@run_id
     `);
     if (result?.recordset.length) {
       result.recordset.forEach((rc) => {
