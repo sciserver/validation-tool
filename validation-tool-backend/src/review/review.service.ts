@@ -52,7 +52,7 @@ export class ReviewService {
       JOIN agency_run ar ON ar.id=re.run_id
       WHERE re.susd_user_id = @EntityID
         and CASE WHEN sv.is_dataset_reference is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END & CASE WHEN sv.agency_dataset_identified is null THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END <= @DoShowWReviewedItems
-      ORDER BY dy.id
+      ORDER BY pu.title, dy.id
         OFFSET @Offset ROWS FETCH NEXT @Fetch ROWS ONLY;`);
     if (result.recordset && result.recordset.length > 0) {
       items = result.recordset as ReviewItem[];
