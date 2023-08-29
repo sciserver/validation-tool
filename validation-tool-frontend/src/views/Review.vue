@@ -52,7 +52,9 @@
             <div class="mentions">
               <v-row no-gutters class="mention-header">
                 <v-col cols="6">
-                  
+                  Mention candidate: {{ review.dataset_alias }}
+                  <br>
+                  Alias: {{ review.dataset_alias2 }}
                 </v-col>
                 <v-col cols="3 pr-2">
                   Does the highlighted text in the snippet refer to a dataset?
